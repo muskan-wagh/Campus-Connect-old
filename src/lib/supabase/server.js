@@ -1,6 +1,16 @@
+import { createClient } from '@supabase/supabase-js'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { cache } from 'react'
+
+export const createSupabaseAnon = () => {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+    if (!url || !key) return null
+
+    return createClient(url, key)
+}
 
 export const createSupabaseServer = cache(async () => {
     const cookieStore = await cookies()

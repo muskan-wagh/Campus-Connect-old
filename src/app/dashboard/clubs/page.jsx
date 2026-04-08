@@ -1,4 +1,4 @@
-import { createSupabaseServer } from '@/lib/supabase/server'
+import { createSupabaseServer, createSupabaseAnon } from '@/lib/supabase/server'
 import Header from '@/components/dashboard/Header'
 import Link from 'next/link'
 import { unstable_cache } from 'next/cache'
@@ -6,7 +6,7 @@ import { unstable_cache } from 'next/cache'
 // Cached fetching function
 const getCachedClubs = unstable_cache(
     async (filter) => {
-        const supabase = await createSupabaseServer()
+        const supabase = createSupabaseAnon()
         if (!supabase) return []
 
         let query = supabase

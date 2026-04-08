@@ -1,30 +1,74 @@
-import { createSupabaseServer } from '@/lib/supabase/server'
+import { createSupabaseServer, createSupabaseAnon } from '@/lib/supabase/server'
 import Header from '@/components/dashboard/Header'
 import Link from 'next/link'
+import { unstable_cache } from 'next/cache'
+
+const getGlobalStudentStats = unstable_cache(
+    async () => {
+        const supabase = createSupabaseAnon()
+        if (!supabase) return { eventsCount: 0, clubsCount: 0 }
+
+        const [
+            { count: eventsCount },
+            { count: clubsCount }
+        ] = await Promise.all([
+            supabase.from('events').select('*', { count: 'exact', head: true }).eq('status', 'published'),
+            supabase.from('clubs').select('*', { count: 'exact', head: true }).eq('is_approved', true)
+        ])
+        return { eventsCount, clubsCount }
+    },
+    ['global-student-stats'],
+    { revalidate: 60, tags: ['events', 'clubs'] }
+)
+
+const getUserMemberships = unstable_cache(
+    async (userId) => {
+        const supabase = createSupabaseAnon()
+        if (!supabase) return { myMemberships: [], myCommunitiesCount: 0 }
+
+        const { data: myMemberships, count: myCommunitiesCount } = await supabase
+            .from('club_members')
+            .select('*, clubs(*)', { count: 'exact' })
+            .eq('user_id', userId)
+        return { myMemberships, myCommunitiesCount }
+    },
+    ['user-memberships'],
+    { revalidate: 60, tags: ['memberships'] }
+)
+
+const getUpcomingEvents = unstable_cache(
+    async () => {
+        const supabase = createSupabaseAnon()
+        if (!supabase) return []
+
+        const { data: upcomingEvents } = await supabase
+            .from('events')
+            .select('*, clubs(name, logo_url)')
+            .eq('status', 'published')
+            .order('event_date', { ascending: true })
+            .limit(5)
+        return upcomingEvents
+    },
+    ['upcoming-events'],
+    { revalidate: 60, tags: ['events'] }
+)
 
 export default async function StudentDashboard() {
     const supabase = await createSupabaseServer()
     const { data: { user } } = await supabase.auth.getUser()
 
-    // Fetch stats
-    const { count: eventsCount } = await supabase.from('events').select('*', { count: 'exact', head: true }).eq('status', 'published')
-    const { count: clubsCount } = await supabase.from('clubs').select('*', { count: 'exact', head: true }).eq('is_approved', true)
-
-    // Fetch My Communities (clubs the user is a member of)
-    const { data: myMemberships, count: myCommunitiesCount } = await supabase
-        .from('club_members')
-        .select('*, clubs(*)', { count: 'exact' })
-        .eq('user_id', user.id)
+    // Fetch stats and data with cache
+    const [
+        { eventsCount, clubsCount },
+        { myMemberships, myCommunitiesCount },
+        upcomingEvents
+    ] = await Promise.all([
+        getGlobalStudentStats(),
+        getUserMemberships(user.id),
+        getUpcomingEvents()
+    ])
 
     const myClubs = myMemberships?.map(m => m.clubs) || []
-
-    // Fetch upcoming events
-    const { data: upcomingEvents } = await supabase
-        .from('events')
-        .select('*, clubs(name, logo_url)')
-        .eq('status', 'published')
-        .order('event_date', { ascending: true })
-        .limit(5)
 
     const stats = [
         { name: 'Live Comms', value: eventsCount || 0, color: 'text-purple-500', icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2v12a2 2 0 002 2z' },

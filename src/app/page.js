@@ -1,22 +1,32 @@
 import Link from 'next/link';
-import { createSupabaseServer } from '@/lib/supabase/server';
+import { createSupabaseAnon } from '@/lib/supabase/server';
+import { unstable_cache } from 'next/cache';
+
+const getEvents = unstable_cache(
+  async () => {
+    const supabase = createSupabaseAnon();
+    if (!supabase) return [];
+
+    const { data: events, error } = await supabase
+      .from('events')
+      .select(`
+        *,
+        clubs (
+          name,
+          logo_url
+        )
+      `)
+      .eq('status', 'published')
+      .order('created_at', { ascending: false })
+      .limit(10);
+    return events;
+  },
+  ['events-feed'],
+  { revalidate: 60, tags: ['events'] }
+);
 
 export default async function Home() {
-  const supabase = await createSupabaseServer();
-
-  // Fetch only published events from approved clubs
-  const { data: events, error } = await supabase
-    .from('events')
-    .select(`
-      *,
-      clubs (
-        name,
-        logo_url
-      )
-    `)
-    .eq('status', 'published')
-    .order('created_at', { ascending: false })
-    .limit(10);
+  const events = await getEvents();
 
   const heroWords = "Stay Connected. Broadcast Your Voice.".split(" ");
 

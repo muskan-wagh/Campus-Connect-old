@@ -1,24 +1,55 @@
-import { createSupabaseServer } from '@/lib/supabase/server'
+import { createSupabaseServer, createSupabaseAnon } from '@/lib/supabase/server'
 import Header from '@/components/dashboard/Header'
 import Link from 'next/link'
-export const dynamic = 'force-dynamic'
+import { unstable_cache } from 'next/cache'
+
+const getAdminStats = unstable_cache(
+    async () => {
+        const supabase = createSupabaseAnon()
+        if (!supabase) return { totalClubs: 0, pendingClubsCount: 0, totalUsers: 0 }
+
+        const [
+            { count: totalClubs },
+            { count: pendingClubsCount },
+            { count: totalUsers }
+        ] = await Promise.all([
+            supabase.from('clubs').select('*', { count: 'exact', head: true }),
+            supabase.from('clubs').select('*', { count: 'exact', head: true }).eq('is_approved', false),
+            supabase.from('profiles').select('*', { count: 'exact', head: true })
+        ])
+
+        return { totalClubs, pendingClubsCount, totalUsers }
+    },
+    ['admin-stats'],
+    { revalidate: 30, tags: ['admin-stats'] }
+)
+
+const getPendingClubs = unstable_cache(
+    async () => {
+        const supabase = createSupabaseAnon()
+        if (!supabase) return []
+
+        const { data: pendingClubs } = await supabase
+            .from('clubs')
+            .select('*')
+            .eq('is_approved', false)
+            .order('created_at', { ascending: false })
+            .limit(5)
+        return pendingClubs
+    },
+    ['pending-clubs'],
+    { revalidate: 30, tags: ['clubs', 'admin-stats'] }
+)
 
 export default async function AdminDashboard() {
     const supabase = await createSupabaseServer()
     const { data: { user } } = await supabase.auth.getUser()
 
-    // Fetch Admin Stats
-    const { count: totalClubs } = await supabase.from('clubs').select('*', { count: 'exact', head: true })
-    const { count: pendingClubsCount } = await supabase.from('clubs').select('*', { count: 'exact', head: true }).eq('is_approved', false)
-    const { count: totalUsers } = await supabase.from('profiles').select('*', { count: 'exact', head: true })
-
-    // Fetch pending clubs for verification queue
-    const { data: pendingClubs } = await supabase
-        .from('clubs')
-        .select('*')
-        .eq('is_approved', false)
-        .order('created_at', { ascending: false })
-        .limit(5)
+    // Fetch Admin Stats and pending clubs with cache
+    const [{ totalClubs, pendingClubsCount, totalUsers }, pendingClubs] = await Promise.all([
+        getAdminStats(),
+        getPendingClubs()
+    ])
 
     const stats = [
         { name: 'Total Clubs', value: totalClubs || 0, color: 'from-[#3B82F6] to-[#2563EB]', icon: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10' },

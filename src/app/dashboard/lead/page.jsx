@@ -1,47 +1,67 @@
-import { createSupabaseServer } from '@/lib/supabase/server'
+import { createSupabaseServer, createSupabaseAnon } from '@/lib/supabase/server'
 import Header from '@/components/dashboard/Header'
 import Link from 'next/link'
+import { unstable_cache } from 'next/cache'
+
+const getLeadClubs = unstable_cache(
+    async (userId) => {
+        const supabase = createSupabaseAnon()
+        if (!supabase) return []
+
+        const { data: myClubs } = await supabase
+            .from('club_members')
+            .select(`
+                club_id,
+                clubs (
+                    id,
+                    name,
+                    description,
+                    is_approved
+                )
+            `)
+            .eq('user_id', userId)
+            .eq('role', 'lead')
+
+        return myClubs?.map(mc => mc.clubs).filter(Boolean) || []
+    },
+    ['lead-clubs'],
+    { revalidate: 60, tags: ['clubs'] }
+)
+
+const getLeadStats = unstable_cache(
+    async (clubIds) => {
+        const supabase = createSupabaseAnon()
+        if (!supabase || !clubIds || clubIds.length === 0) return { totalMembers: 0, totalEvents: 0 }
+
+        const [
+            { count: membersCount },
+            { count: eventsCount }
+        ] = await Promise.all([
+            supabase
+                .from('club_members')
+                .select('*', { count: 'exact', head: true })
+                .in('club_id', clubIds),
+            supabase
+                .from('events')
+                .select('*', { count: 'exact', head: true })
+                .in('club_id', clubIds)
+        ])
+
+        return { totalMembers: membersCount || 0, totalEvents: eventsCount || 0 }
+    },
+    ['lead-stats'],
+    { revalidate: 60, tags: ['lead-stats'] }
+)
 
 export default async function LeadDashboard() {
     const supabase = await createSupabaseServer()
     const { data: { user } } = await supabase.auth.getUser()
 
-    // Fetch My Clubs (Clubs where I am lead)
-    const { data: myClubs } = await supabase
-        .from('club_members')
-        .select(`
-            club_id,
-            clubs (
-                id,
-                name,
-                description,
-                is_approved
-            )
-        `)
-        .eq('user_id', user.id)
-        .eq('role', 'lead')
+    // Fetch My Clubs with cache - using key inclusive of userId
+    const clubs = await getLeadClubs(user.id)
 
-    const clubs = myClubs?.map(mc => mc.clubs).filter(Boolean) || []
-
-    // Total members across all my clubs
-    let totalMembers = 0
-    if (clubs.length > 0) {
-        const { count } = await supabase
-            .from('club_members')
-            .select('*', { count: 'exact', head: true })
-            .in('club_id', clubs.map(c => c.id))
-        totalMembers = count || 0
-    }
-
-    // Total events created for my clubs
-    let totalEvents = 0
-    if (clubs.length > 0) {
-        const { count } = await supabase
-            .from('events')
-            .select('*', { count: 'exact', head: true })
-            .in('club_id', clubs.map(c => c.id))
-        totalEvents = count || 0
-    }
+    // Total stats across all my clubs with cache
+    const { totalMembers, totalEvents } = await getLeadStats(clubs.map(c => c.id))
 
     const stats = [
         { name: 'Club Members', value: totalMembers || 0, change: 'total', color: 'from-[#3B82F6] to-[#2563EB]', icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z' },
