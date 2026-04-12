@@ -47,7 +47,7 @@ export default async function ClubReview({ params }) {
                                 <p className="text-gray-500 font-medium">Internal ID: {club.id}</p>
                             </div>
                         </div>
-                        <div className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest ${club.is_approved ? 'bg-[#0b87bd]/10 text-[#0b87bd]' : 'bg-orange-500/10 text-orange-500'}`}>
+                        <div className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest ${club.is_approved ? 'bg-[#0b87bd]/10 text-[#0b87bd]' : 'bg-slate-950/10 text-slate-950'}`}>
                             {club.is_approved ? 'Verified' : 'Awaiting Review'}
                         </div>
                     </div>

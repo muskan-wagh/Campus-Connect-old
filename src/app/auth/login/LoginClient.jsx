@@ -9,7 +9,7 @@ export default function LoginClient() {
     if (!message) return null;
 
     return (
-        <div className="mb-6 rounded-xl border border-orange-300 bg-orange-100 px-4 py-3 text-sm font-medium text-orange-800">
+        <div className="mb-6 rounded-xl border border-slate-300 bg-slate-100 px-4 py-3 text-sm font-medium text-slate-800">
             {message}
         </div>
     );

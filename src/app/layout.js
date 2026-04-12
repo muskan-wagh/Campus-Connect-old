@@ -1,10 +1,10 @@
-import { Plus_Jakarta_Sans, Inter } from 'next/font/google'
+import { Playfair_Display, Inter } from 'next/font/google'
 import "./globals.css";
 
-const plusJakartaSans = Plus_Jakarta_Sans({
+const playfair = Playfair_Display({
   subsets: ['latin'],
   display: 'swap',
-  variable: '--font-plus-jakarta',
+  variable: '--font-playfair',
 })
 
 const inter = Inter({
@@ -20,13 +20,13 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className={`${plusJakartaSans.variable} ${inter.variable}`}>
-      <body className="font-sans antialiased min-h-screen flex flex-col bg-background text-foreground transition-colors duration-300">
+    <html lang="en" className={`${playfair.variable} ${inter.variable}`}>
+      <body className="font-sans antialiased min-h-screen flex flex-col bg-background text-foreground selection:bg-black selection:text-white">
         <main className="flex-grow">
           {children}
         </main>
-        <footer className="border-t border-black/5 py-8 mt-20">
-          <div className="max-w-7xl mx-auto px-6 text-center text-gray-400 text-sm">
+        <footer className="border-t border-black/5 py-12 mt-20">
+          <div className="max-w-7xl mx-auto px-6 text-center text-gray-400 text-xs tracking-widest uppercase">
             &copy; {new Date().getFullYear()} Campus Connect. All rights reserved.
           </div>
         </footer>

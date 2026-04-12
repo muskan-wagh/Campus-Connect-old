@@ -79,18 +79,18 @@ export default async function LeadDashboard() {
 
             <div className="space-y-12">
                 {/* Stats Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
                     {stats.map((stat) => (
-                        <div key={stat.name} className="bg-white border border-slate-100 p-8 rounded-[2.5rem] relative overflow-hidden group shadow-xl shadow-slate-200/50 hover:shadow-orange-500/10 transition-all duration-500">
+                        <div key={stat.name} className="bg-white border border-slate-100 p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] relative overflow-hidden group shadow-xl shadow-slate-200/50 hover:shadow-slate-950/10 transition-all duration-500">
                             <div className="relative z-10">
-                                <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.3em] mb-3">{stat.name}</p>
+                                <p className="text-slate-400 text-[9px] md:text-[10px] font-black uppercase tracking-[0.3em] mb-2 md:mb-3">{stat.name}</p>
                                 <div className="flex items-baseline gap-3">
-                                    <h2 className="text-5xl font-black tracking-tighter text-slate-900 group-hover:text-orange-600 transition-colors">{stat.value}</h2>
-                                    <div className="w-2.5 h-2.5 rounded-full bg-orange-500 animate-pulse shadow-[0_0_10px_rgba(249,115,22,0.5)]"></div>
+                                    <h2 className="text-4xl md:text-5xl font-black tracking-tighter text-slate-900 group-hover:text-slate-950 transition-colors">{stat.value}</h2>
+                                    <div className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full bg-slate-950 animate-pulse shadow-[0_0_10px_rgba(249,115,22,0.5)]"></div>
                                 </div>
                             </div>
-                            <div className="absolute -right-4 -bottom-4 w-28 h-28 bg-orange-50 rounded-full opacity-50 group-hover:scale-110 transition-transform duration-700 flex items-center justify-center p-6">
-                                <svg className="w-full h-full text-orange-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div className="absolute -right-4 -bottom-4 w-24 h-24 md:w-28 md:h-28 bg-slate-50 rounded-full opacity-50 group-hover:scale-110 transition-transform duration-700 flex items-center justify-center p-6">
+                                <svg className="w-full h-full text-slate-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d={stat.icon} />
                                 </svg>
                             </div>
@@ -101,32 +101,32 @@ export default async function LeadDashboard() {
                 {/* Management Section */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
                     <div className="lg:col-span-2 space-y-8">
-                        <div className="flex items-center justify-between border-b border-slate-100 pb-5">
-                            <h2 className="text-[11px] font-black uppercase tracking-[0.4em] text-slate-400">Managed Nodes</h2>
-                            <Link href="/dashboard/lead/create-club" className="px-8 py-3 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-orange-600 transition-all shadow-lg shadow-slate-200">INITIALIZE NEW NODE</Link>
+                        <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-100 pb-5 gap-4">
+                            <h2 className="text-[10px] md:text-[11px] font-black uppercase tracking-[0.4em] text-slate-400 text-center md:text-left">Managed Nodes</h2>
+                            <Link href="/dashboard/lead/create-club" className="w-full md:w-auto text-center px-8 py-3 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-950 transition-all shadow-lg shadow-slate-200">INITIALIZE NEW NODE</Link>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
                             {clubs.length > 0 ? clubs.map(club => (
-                                <div key={club.id} className="bg-white border border-slate-100 p-8 rounded-[2.5rem] group hover:border-orange-200 transition-all duration-500 shadow-xl shadow-slate-200/40 relative overflow-hidden">
-                                    <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/[0.02] rounded-full -mr-16 -mt-16 group-hover:bg-orange-500/[0.05] transition-all duration-700"></div>
+                                <div key={club.id} className="bg-white border border-slate-100 p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] group hover:border-slate-200 transition-all duration-500 shadow-xl shadow-slate-200/40 relative overflow-hidden">
+                                    <div className="absolute top-0 right-0 w-32 h-32 bg-slate-950/[0.02] rounded-full -mr-16 -mt-16 group-hover:bg-slate-950/[0.05] transition-all duration-700"></div>
 
-                                    <div className="flex justify-between items-start mb-8 relative z-10">
-                                        <div className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest shadow-sm ${club.is_approved ? 'bg-orange-50 text-orange-600 border border-orange-100' : 'bg-slate-50 text-slate-400 border border-slate-100'}`}>
+                                    <div className="flex justify-between items-start mb-6 md:mb-8 relative z-10">
+                                        <div className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest shadow-sm ${club.is_approved ? 'bg-slate-50 text-slate-950 border border-slate-100' : 'bg-slate-50 text-slate-400 border border-slate-100'}`}>
                                             {club.is_approved ? 'Active Sync' : 'Awaiting Link'}
                                         </div>
                                     </div>
-                                    <h3 className="text-3xl font-black text-slate-900 group-hover:text-orange-600 transition-colors mb-4 tracking-tighter leading-[1.1] relative z-10">{club.name}</h3>
-                                    <p className="text-slate-500 text-base font-medium line-clamp-2 mb-8 relative z-10">"{club.description}"</p>
-                                    <div className="flex items-center gap-4 pt-8 border-t border-slate-50 relative z-10">
-                                        <Link href={`/dashboard/lead/members?club=${club.id}`} className="flex-1 text-center py-4 bg-slate-50 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-slate-900 hover:bg-white transition-all border border-slate-100">Members</Link>
-                                        <Link href={`/dashboard/lead/create-event?club=${club.id}`} className="flex-1 text-center py-4 bg-slate-900 rounded-2xl text-[10px] font-black uppercase tracking-widest text-white hover:bg-orange-600 transition-all shadow-lg hover:shadow-orange-500/20">Broadcast</Link>
+                                    <h3 className="text-2xl md:text-3xl font-black text-slate-900 group-hover:text-slate-950 transition-colors mb-4 tracking-tighter leading-[1.1] relative z-10 uppercase truncate">{club.name}</h3>
+                                    <p className="text-slate-500 text-sm md:text-base font-medium line-clamp-2 mb-8 relative z-10 italic">"{club.description}"</p>
+                                    <div className="flex items-center gap-3 pt-8 border-t border-slate-50 relative z-10">
+                                        <Link href={`/dashboard/lead/members?club=${club.id}`} className="flex-1 text-center py-3.5 bg-slate-50 rounded-xl md:rounded-2xl text-[9px] md:text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-slate-900 hover:bg-white transition-all border border-slate-100">Members</Link>
+                                        <Link href={`/dashboard/lead/create-event?club=${club.id}`} className="flex-1 text-center py-3.5 bg-slate-900 rounded-xl md:rounded-2xl text-[9px] md:text-[10px] font-black uppercase tracking-widest text-white hover:bg-slate-950 transition-all shadow-lg hover:shadow-slate-950/20">Broadcast</Link>
                                     </div>
                                 </div>
                             )) : (
-                                <div className="col-span-2 p-20 border-2 border-dashed border-slate-100 rounded-[3rem] text-center bg-white/50">
-                                    <p className="text-slate-300 font-black uppercase tracking-[0.4em] text-[11px] mb-4">No active nodes under your auth code</p>
-                                    <Link href="/dashboard/lead/create-club" className="text-orange-500 font-black uppercase tracking-widest text-[10px] hover:underline decoration-2 underline-offset-4">Deploy initial node &rarr;</Link>
+                                <div className="col-span-1 md:col-span-2 p-12 md:p-20 border-2 border-dashed border-slate-100 rounded-[2.5rem] md:rounded-[3rem] text-center bg-white/50">
+                                    <p className="text-slate-300 font-black uppercase tracking-[0.3em] md:tracking-[0.4em] text-[10px] md:text-[11px] mb-4">No active nodes under your auth code</p>
+                                    <Link href="/dashboard/lead/create-club" className="text-slate-950 font-black uppercase tracking-widest text-[10px] hover:underline decoration-2 underline-offset-4">Deploy initial node &rarr;</Link>
                                 </div>
                             )}
                         </div>
@@ -143,8 +143,8 @@ export default async function LeadDashboard() {
                                     { name: 'Monitor Live Feed', path: '/dashboard/lead/live-events', icon: 'M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z' },
                                     { name: 'Global Node Directory', path: '/dashboard/lead/all-clubs', icon: 'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z' },
                                 ].map(action => (
-                                    <Link key={action.name} href={action.path} className="flex items-center gap-4 p-5 hover:bg-orange-50 rounded-2xl transition-all group border border-transparent hover:border-orange-100">
-                                        <div className="w-11 h-11 bg-slate-50 group-hover:bg-white rounded-xl flex items-center justify-center text-slate-400 group-hover:text-orange-500 transition-all border border-slate-100 group-hover:shadow-lg">
+                                    <Link key={action.name} href={action.path} className="flex items-center gap-4 p-5 hover:bg-slate-50 rounded-2xl transition-all group border border-transparent hover:border-slate-100">
+                                        <div className="w-11 h-11 bg-slate-50 group-hover:bg-white rounded-xl flex items-center justify-center text-slate-400 group-hover:text-slate-950 transition-all border border-slate-100 group-hover:shadow-lg">
                                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d={action.icon} />
                                             </svg>
@@ -163,7 +163,7 @@ export default async function LeadDashboard() {
                                     Status Report
                                 </Link>
                             </div>
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 blur-3xl -mr-16 -mt-16 group-hover:bg-orange-500/20 transition-all duration-700"></div>
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-slate-950/10 blur-3xl -mr-16 -mt-16 group-hover:bg-slate-950/20 transition-all duration-700"></div>
                             <div className="absolute -bottom-8 -left-8 w-24 h-24 bg-white/5 rounded-full blur-2xl"></div>
                         </div>
                     </div>

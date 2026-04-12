@@ -71,7 +71,7 @@ export default async function AllAdminEvents() {
                                                 }`}>
                                                 {event.status}
                                             </span>
-                                            <span className={`inline-flex px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest w-fit border ${event.is_admin_approved ? 'bg-[#0b87bd]/5 text-[#0b87bd] border-[#0b87bd]/10' : 'bg-orange-50 text-orange-600 border-orange-100'
+                                            <span className={`inline-flex px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest w-fit border ${event.is_admin_approved ? 'bg-[#0b87bd]/5 text-[#0b87bd] border-[#0b87bd]/10' : 'bg-slate-50 text-slate-950 border-slate-100'
                                                 }`}>
                                                 {event.is_admin_approved ? '✓ Authorized' : '⧗ Pending Admin'}
                                             </span>

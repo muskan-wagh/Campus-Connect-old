@@ -66,7 +66,7 @@ export default async function AllClubs({ searchParams }) {
                             href={`/dashboard/clubs?filter=${status}`}
                             className={`px-10 py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] transition-all whitespace-nowrap border-2 ${filter === status
                                 ? 'bg-slate-900 text-white border-slate-900 shadow-xl shadow-slate-200'
-                                : 'bg-white text-slate-400 border-slate-50 hover:text-orange-600 hover:border-orange-100 hover:bg-orange-50/30'
+                                : 'bg-white text-slate-400 border-slate-50 hover:text-slate-950 hover:border-slate-100 hover:bg-slate-50/30'
                                 }`}
                         >
                             {status}
@@ -75,8 +75,8 @@ export default async function AllClubs({ searchParams }) {
                 </div>
 
                 {clubs.length === 0 ? (
-                    <div className="bg-white rounded-[4rem] p-32 text-center border-2 border-dashed border-slate-50 shadow-2xl shadow-slate-100 relative overflow-hidden group">
-                        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-orange-500/5 blur-[80px] rounded-full"></div>
+                    <div className="bg-white rounded-[2.5rem] md:rounded-[4rem] p-12 md:p-32 text-center border-2 border-dashed border-slate-50 shadow-2xl shadow-slate-100 relative overflow-hidden group">
+                        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-slate-950/5 blur-[80px] rounded-full"></div>
                         <div className="relative z-10">
                             <div className="w-24 h-24 bg-slate-50 rounded-3xl flex items-center justify-center mx-auto mb-10 shadow-inner group-hover:scale-110 transition-transform duration-500">
                                 <svg className="w-12 h-12 text-slate-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -89,18 +89,18 @@ export default async function AllClubs({ searchParams }) {
                                     ? "No active clusters have been initialized in this sector."
                                     : `No ${filter} frequencies detected in the local grid.`}
                             </p>
-                            <Link href="/dashboard/clubs/new" className="px-10 py-5 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-orange-600 transition-all shadow-xl hover:shadow-orange-500/20 active:scale-95">
+                            <Link href="/dashboard/clubs/new" className="px-10 py-5 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-950 transition-all shadow-xl hover:shadow-slate-950/20 active:scale-95">
                                 Initialize New Node
                             </Link>
                         </div>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-10">
                         {clubs.map((club) => (
                             <Link
                                 key={club.id}
                                 href={`/dashboard/clubs/${club.id}`}
-                                className="bg-white border border-slate-100 rounded-[3.5rem] overflow-hidden hover:shadow-2xl hover:shadow-slate-200 transition-all duration-500 group flex flex-col h-full relative"
+                                className="bg-white border border-slate-100 rounded-[2.5rem] md:rounded-[3.5rem] overflow-hidden hover:shadow-2xl hover:shadow-slate-200 transition-all duration-500 group flex flex-col h-full relative"
                             >
                                 {/* Cover Image */}
                                 <div className="h-56 bg-slate-50 relative overflow-hidden shrink-0">
@@ -123,7 +123,7 @@ export default async function AllClubs({ searchParams }) {
                                     {/* Status Badge */}
                                     <div className="absolute top-8 right-8 z-20">
                                         <span className={`px-5 py-2 rounded-full text-[9px] font-black uppercase tracking-[0.2em] border backdrop-blur-md shadow-lg ${club.is_approved
-                                            ? 'bg-orange-500 text-white border-orange-400 shadow-orange-500/20'
+                                            ? 'bg-slate-950 text-white border-slate-800 shadow-slate-950/20'
                                             : 'bg-white/90 text-slate-400 border-slate-100'
                                             }`}>
                                             {club.is_approved ? '✓ Verified' : 'Syncing'}
@@ -132,8 +132,8 @@ export default async function AllClubs({ searchParams }) {
 
                                     {/* Logo Overlay */}
                                     {club.logo_url && (
-                                        <div className="absolute bottom-0 left-10 transform translate-y-1/2 z-20">
-                                            <div className="w-20 h-20 rounded-[1.5rem] bg-white border-4 border-white shadow-2xl overflow-hidden group-hover:scale-110 transition-transform duration-500">
+                                        <div className="absolute bottom-0 left-6 md:left-10 transform translate-y-1/2 z-20">
+                                            <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl md:rounded-[1.5rem] bg-white border-4 border-white shadow-2xl overflow-hidden group-hover:scale-110 transition-transform duration-500">
                                                 <img
                                                     src={club.logo_url}
                                                     alt={`${club.name} logo`}
@@ -145,10 +145,10 @@ export default async function AllClubs({ searchParams }) {
                                 </div>
 
                                 {/* Content */}
-                                <div className="p-10 pt-14 flex flex-col flex-grow relative overflow-hidden">
-                                    <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/5 blur-3xl -mr-16 -mt-16 group-hover:bg-orange-500/10 transition-all"></div>
+                                <div className="p-8 md:p-10 pt-12 md:pt-14 flex flex-col flex-grow relative overflow-hidden">
+                                    <div className="absolute top-0 right-0 w-32 h-32 bg-slate-950/5 blur-3xl -mr-16 -mt-16 group-hover:bg-slate-950/10 transition-all"></div>
 
-                                    <h3 className="text-3xl font-black text-slate-900 mb-4 group-hover:text-orange-600 transition-colors line-clamp-1 tracking-tighter uppercase leading-none">
+                                    <h3 className="text-2xl md:text-3xl font-black text-slate-900 mb-4 group-hover:text-slate-950 transition-colors line-clamp-1 tracking-tighter uppercase leading-none">
                                         {club.name}
                                     </h3>
 
@@ -186,7 +186,7 @@ export default async function AllClubs({ searchParams }) {
                                             </div>
                                         </div>
 
-                                        <div className="flex items-center gap-3 px-5 py-2.5 bg-slate-50 rounded-2xl text-slate-400 group-hover:bg-orange-500 group-hover:text-white transition-all shadow-inner group-hover:shadow-orange-500/20">
+                                        <div className="flex items-center gap-3 px-5 py-2.5 bg-slate-50 rounded-2xl text-slate-400 group-hover:bg-slate-950 group-hover:text-white transition-all shadow-inner group-hover:shadow-slate-950/20">
                                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                                             </svg>
