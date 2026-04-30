@@ -130,26 +130,26 @@ export default function NotificationDropdown({ user }) {
         <div className="relative" ref={dropdownRef}>
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-gray-400 hover:text-[#0b87bd] hover:bg-[#0b87bd]/5 transition-all shadow-sm border border-white/5 relative"
+                className="w-12 h-12 bg-card rounded-2xl flex items-center justify-center text-muted-foreground hover:text-primary hover:bg-muted transition-all shadow-sm border border-border relative"
             >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                 </svg>
                 {unreadCount > 0 && (
-                    <span className="absolute top-2 right-2 w-4 h-4 bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center animate-pulse">
+                    <span className="absolute top-2 right-2 w-4 h-4 bg-primary text-primary-foreground text-[10px] font-black rounded-full flex items-center justify-center animate-pulse">
                         {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                 )}
             </button>
 
             {isOpen && (
-                <div className="absolute right-0 mt-4 w-96 bg-white rounded-[2rem] shadow-2xl border border-gray-100 overflow-hidden z-50">
-                    <div className="p-6 border-b border-gray-50 flex items-center justify-between">
-                        <h3 className="font-black text-[#1E1E2D] tracking-tight">Notifications</h3>
+                <div className="absolute right-0 mt-4 w-96 bg-card rounded-[2rem] shadow-2xl border border-border overflow-hidden z-50">
+                    <div className="p-6 border-b border-border flex items-center justify-between">
+                        <h3 className="font-black text-foreground tracking-tight">Notifications</h3>
                         {unreadCount > 0 && (
                             <button
                                 onClick={markAllAsRead}
-                                className="text-[10px] font-black uppercase tracking-widest text-[#0b87bd] hover:text-[#096a96]"
+                                className="text-[10px] font-black uppercase tracking-widest text-primary hover:opacity-80"
                             >
                                 Mark all as read
                             </button>
@@ -162,13 +162,13 @@ export default function NotificationDropdown({ user }) {
                                 <div
                                     key={notif.id}
                                     onClick={() => !notif.is_read && markAsRead(notif.id)}
-                                    className={`p-6 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors cursor-pointer group ${!notif.is_read ? 'bg-[#0b87bd]/5' : ''}`}
+                                    className={`p-6 border-b border-border last:border-0 hover:bg-muted transition-colors cursor-pointer group ${!notif.is_read ? 'bg-primary/5' : ''}`}
                                 >
                                     <div className="flex gap-4">
-                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${notif.type === 'success' ? 'bg-green-100 text-green-600' :
-                                                notif.type === 'warning' ? 'bg-yellow-100 text-yellow-600' :
-                                                    notif.type === 'error' ? 'bg-red-100 text-red-600' :
-                                                        'bg-[#0b87bd]/10 text-[#0b87bd]'
+                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${notif.type === 'success' ? 'bg-emerald-100 text-emerald-600' :
+                                            notif.type === 'warning' ? 'bg-amber-100 text-amber-600' :
+                                                notif.type === 'error' ? 'bg-destructive/10 text-destructive' :
+                                                    'bg-primary/10 text-primary'
                                             }`}>
                                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 {notif.type === 'success' ? (
@@ -180,14 +180,14 @@ export default function NotificationDropdown({ user }) {
                                         </div>
                                         <div className="flex-grow">
                                             <div className="flex items-center justify-between mb-1">
-                                                <h4 className="text-sm font-black text-[#1E1E2D] tracking-tight">{notif.title}</h4>
-                                                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">{getTimeAgo(notif.created_at)}</span>
+                                                <h4 className="text-sm font-black text-foreground tracking-tight">{notif.title}</h4>
+                                                <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">{getTimeAgo(notif.created_at)}</span>
                                             </div>
-                                            <p className="text-xs text-gray-500 font-medium leading-relaxed line-clamp-2">{notif.message}</p>
+                                            <p className="text-xs text-muted-foreground font-medium leading-relaxed line-clamp-2">{notif.message}</p>
                                             {notif.link && (
                                                 <Link
                                                     href={notif.link}
-                                                    className="mt-3 inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[#0b87bd] group-hover:gap-3 transition-all"
+                                                    className="mt-3 inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-primary group-hover:gap-3 transition-all"
                                                 >
                                                     View Details <span>&rarr;</span>
                                                 </Link>
@@ -198,12 +198,12 @@ export default function NotificationDropdown({ user }) {
                             ))
                         ) : (
                             <div className="p-12 text-center">
-                                <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <svg className="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <svg className="w-8 h-8 text-muted-foreground/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                                     </svg>
                                 </div>
-                                <p className="text-sm text-gray-400 font-bold uppercase tracking-widest">No notifications yet</p>
+                                <p className="text-sm text-muted-foreground font-bold uppercase tracking-widest">No notifications yet</p>
                             </div>
                         )}
                     </div>

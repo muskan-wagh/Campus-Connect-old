@@ -41,27 +41,27 @@ export default function Header({ title, subtitle, user }) {
         <header className="flex flex-col md:flex-row md:items-start justify-between gap-8 md:gap-12 pb-10 md:pb-16 pt-4">
             <div className="flex-grow">
                 <div className="flex items-center gap-3 mb-4 md:mb-6">
-                    <span className="font-serif italic text-xl opacity-30 tracking-tight">Index</span>
-                    <span className="w-8 h-px bg-slate-100"></span>
-                    <span className="journal-label mb-0">{title}</span>
+                    <span className="font-serif italic text-xl text-primary opacity-30 tracking-tight">Index</span>
+                    <span className="w-8 h-px bg-border"></span>
+                    <span className="journal-label mb-0 text-muted-foreground">{title}</span>
                 </div>
 
-                <h1 className="text-4xl md:text-6xl font-serif tracking-tight text-slate-900 mb-4 md:mb-6 leading-[0.9]">
+                <h1 className="text-4xl md:text-6xl font-serif tracking-tight text-foreground mb-4 md:mb-6 leading-[0.9]">
                     {title}
                 </h1>
 
-                <p className="max-w-md text-[10px] uppercase tracking-[0.3em] font-medium text-slate-400 leading-relaxed">
+                <p className="max-w-md text-[10px] uppercase tracking-[0.3em] font-medium text-muted-foreground leading-relaxed">
                     {subtitle}
                 </p>
             </div>
 
             <div className="flex items-center gap-6 md:gap-8 w-full md:w-auto justify-between md:justify-end">
                 <div className="relative group flex-grow md:flex-grow-0">
-                    <div className="flex items-center gap-4 border-b border-slate-200 pb-2 transition-all focus-within:border-slate-900 w-full">
+                    <div className="flex items-center gap-4 border-b border-border pb-2 transition-all focus-within:border-primary w-full">
                         {isSearching ? (
-                            <div className="w-4 h-4 border border-slate-900 border-t-transparent animate-spin"></div>
+                            <div className="w-4 h-4 border border-primary border-t-transparent animate-spin"></div>
                         ) : (
-                            <svg className="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-4 h-4 text-muted-foreground/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                             </svg>
                         )}
@@ -70,23 +70,23 @@ export default function Header({ title, subtitle, user }) {
                             placeholder="Search Catalogue..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="bg-transparent text-[11px] uppercase tracking-widest font-bold text-slate-900 outline-none w-full md:w-48 placeholder:text-slate-200"
+                            className="bg-transparent text-[11px] uppercase tracking-widest font-bold text-foreground outline-none w-full md:w-48 placeholder:text-muted-foreground/30"
                         />
                     </div>
 
                     {/* Search Results Dropdown - Journal Styled */}
                     {searchQuery.trim().length >= 2 && (
-                        <div className="absolute top-full mt-4 left-0 right-0 bg-white border border-slate-100 shadow-2xl z-[100] p-6 animate-in fade-in slide-in-from-top-1 duration-300">
+                        <div className="absolute top-full mt-4 left-0 right-0 bg-card border border-border shadow-2xl z-[100] p-6 animate-in fade-in slide-in-from-top-1 duration-300 rounded-sm">
                             {results.clubs.length === 0 && results.events.length === 0 && !isSearching ? (
-                                <div className="journal-label text-center grayscale py-4">No Entries Found</div>
+                                <div className="journal-label text-center grayscale py-4 text-muted-foreground">No Entries Found</div>
                             ) : (
                                 <div className="space-y-8">
                                     {results.clubs.length > 0 && (
                                         <div>
-                                            <div className="journal-label mb-4 opacity-50">Memberships</div>
+                                            <div className="journal-label mb-4 opacity-50 text-muted-foreground">Memberships</div>
                                             <div className="space-y-3">
                                                 {results.clubs.map(club => (
-                                                    <Link key={club.id} href={`/dashboard/clubs/${club.id}`} className="block text-[11px] font-bold uppercase tracking-widest hover:text-slate-400 transition-colors">
+                                                    <Link key={club.id} href={`/dashboard/clubs/${club.id}`} className="block text-[11px] font-bold uppercase tracking-widest hover:text-primary transition-colors text-foreground">
                                                         {club.name}
                                                     </Link>
                                                 ))}
@@ -95,10 +95,10 @@ export default function Header({ title, subtitle, user }) {
                                     )}
                                     {results.events.length > 0 && (
                                         <div>
-                                            <div className="journal-label mb-4 opacity-50">Transmissions</div>
+                                            <div className="journal-label mb-4 opacity-50 text-muted-foreground">Transmissions</div>
                                             <div className="space-y-3">
                                                 {results.events.map(event => (
-                                                    <Link key={event.id} href={`/dashboard/events/${event.id}`} className="block text-[11px] font-bold uppercase tracking-widest hover:text-slate-400 transition-colors">
+                                                    <Link key={event.id} href={`/dashboard/events/${event.id}`} className="block text-[11px] font-bold uppercase tracking-widest hover:text-primary transition-colors text-foreground">
                                                         {event.title}
                                                     </Link>
                                                 ))}

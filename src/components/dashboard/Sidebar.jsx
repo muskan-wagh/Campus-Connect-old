@@ -44,7 +44,7 @@ export default function Sidebar({ user, profile }) {
     return (
         <>
             {/* Desktop Sidebar */}
-            <aside className="hidden lg:flex flex-col w-72 h-screen fixed left-0 top-0 bg-white border-r border-slate-100 p-10 z-[100]">
+            <aside className="hidden lg:flex flex-col w-72 h-screen fixed left-0 top-0 bg-background border-r border-border p-10 z-[100]">
                 <div className="mb-12">
                     <Logo showText={true} />
                 </div>
@@ -57,8 +57,8 @@ export default function Sidebar({ user, profile }) {
                                 key={item.name}
                                 href={item.path}
                                 className={`flex items-center gap-4 px-4 py-3 group transition-all duration-200 ${isActive
-                                    ? 'text-slate-900'
-                                    : 'text-slate-400 hover:text-slate-600'
+                                    ? 'text-primary'
+                                    : 'text-muted-foreground hover:text-foreground'
                                     }`}
                             >
                                 <div className={`transition-transform duration-300 ${isActive ? 'scale-110' : 'group-hover:scale-110'}`}>
@@ -72,7 +72,7 @@ export default function Sidebar({ user, profile }) {
                                     </svg>
                                 </div>
                                 <span className={`text-[12px] uppercase tracking-[0.2em] font-semibold ${isActive ? '' : ''}`}>{item.name}</span>
-                                {isActive && <div className="ml-auto w-1 h-1 bg-slate-900 rounded-full"></div>}
+                                {isActive && <div className="ml-auto w-1.5 h-1.5 bg-primary rounded-full"></div>}
                             </Link>
                         )
                     })}
@@ -81,22 +81,22 @@ export default function Sidebar({ user, profile }) {
                 <div className="mt-auto space-y-8">
                     {/* Minimal User Profile Info */}
                     <Link href="/dashboard/profile" className="flex items-center gap-4 group">
-                        <div className="w-10 h-10 bg-slate-50 border border-slate-100 flex items-center justify-center overflow-hidden grayscale group-hover:grayscale-0 transition-all">
+                        <div className="w-10 h-10 bg-muted border border-border flex items-center justify-center overflow-hidden grayscale group-hover:grayscale-0 transition-all rounded-sm">
                             {profile?.avatar_url ? (
                                 <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
                             ) : (
-                                <span className="text-xs font-serif italic text-slate-400">{profile?.full_name?.[0]}</span>
+                                <span className="text-xs font-serif italic text-muted-foreground">{profile?.full_name?.[0]}</span>
                             )}
                         </div>
                         <div className="min-w-0">
-                            <p className="text-[11px] font-bold text-slate-900 truncate uppercase tracking-widest">{profile?.full_name || 'User'}</p>
-                            <p className="text-[9px] text-slate-400 uppercase tracking-widest mt-0.5">{currentRole.replace('_', ' ')}</p>
+                            <p className="text-[11px] font-bold text-foreground truncate uppercase tracking-widest">{profile?.full_name || 'User'}</p>
+                            <p className="text-[9px] text-muted-foreground uppercase tracking-widest mt-0.5">{currentRole.replace('_', ' ')}</p>
                         </div>
                     </Link>
 
                     <button
                         onClick={handleLogout}
-                        className="w-full flex items-center gap-4 text-slate-300 hover:text-slate-900 transition-all font-bold text-[10px] uppercase tracking-[0.3em]"
+                        className="w-full flex items-center gap-4 text-muted-foreground hover:text-primary transition-all font-bold text-[10px] uppercase tracking-[0.3em]"
                     >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -107,14 +107,14 @@ export default function Sidebar({ user, profile }) {
             </aside>
 
             {/* Mobile Bottom Navbar - Simplified */}
-            <nav className="lg:hidden fixed bottom-6 left-6 right-6 bg-white border border-slate-100 px-8 py-4 flex justify-between items-center z-[100] shadow-2xl">
+            <nav className="lg:hidden fixed bottom-6 left-6 right-6 bg-card border border-border px-8 py-4 flex justify-between items-center z-[100] shadow-2xl rounded-lg">
                 {items.slice(0, 4).map((item) => {
                     const isActive = pathname === item.path
                     return (
                         <Link
                             key={item.name}
                             href={item.path}
-                            className={`flex flex-col items-center gap-1 transition-all ${isActive ? 'text-slate-900 scale-110' : 'text-slate-300'}`}
+                            className={`flex flex-col items-center gap-1 transition-all ${isActive ? 'text-primary scale-110' : 'text-muted-foreground'}`}
                         >
                             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={item.icon} />
@@ -122,11 +122,11 @@ export default function Sidebar({ user, profile }) {
                         </Link>
                     )
                 })}
-                <Link href="/dashboard/profile" className={`w-8 h-8 overflow-hidden grayscale ${pathname === '/dashboard/profile' ? 'grayscale-0 border border-slate-900' : 'border border-slate-100'}`}>
+                <Link href="/dashboard/profile" className={`w-8 h-8 overflow-hidden rounded-full ${pathname === '/dashboard/profile' ? 'border-2 border-primary' : 'border border-border'}`}>
                     {profile?.avatar_url ? (
                         <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
                     ) : (
-                        <div className="w-full h-full bg-slate-50 flex items-center justify-center text-[10px] font-bold text-slate-300">
+                        <div className="w-full h-full bg-muted flex items-center justify-center text-[10px] font-bold text-muted-foreground">
                             {profile?.full_name?.[0]}
                         </div>
                     )}
