@@ -90,11 +90,14 @@ export default function Register() {
 
   const handleSocialLogin = async (provider) => {
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
-        options: { redirectTo: `${window.location.protocol}//${window.location.host}/auth/callback` }
+        options: { redirectTo: `${window.location.origin}/auth/callback` }
       })
       if (error) throw error
+      if (data?.url) {
+        window.location.href = data.url
+      }
     } catch (err) {
       setError(err.message)
     }

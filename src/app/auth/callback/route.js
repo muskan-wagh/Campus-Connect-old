@@ -1,15 +1,17 @@
-import { createSupabaseServer } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { createSupabaseServer } from '@/lib/supabase/server'
 
 export async function GET(request) {
-    const requestUrl = new URL(request.url)
-    const code = requestUrl.searchParams.get('code')
+    const { searchParams, origin } = new URL(request.url)
+    const code = searchParams.get('code')
 
     if (code) {
         const supabase = await createSupabaseServer()
-        await supabase.auth.exchangeCodeForSession(code)
+        const { error } = await supabase.auth.exchangeCodeForSession(code)
+        if (!error) {
+            return NextResponse.redirect(`${origin}/dashboard`)
+        }
     }
 
-    // URL to redirect to after sign in process completes
-    return NextResponse.redirect(new URL('/dashboard', request.url))
+    return NextResponse.redirect(`${origin}/auth/login?message=Authentication+failed`)
 }
