@@ -20,20 +20,14 @@ export default async function DashboardPage() {
     const rawRole = profile?.role || user.user_metadata?.role || 'student'
     const userRole = rawRole.toLowerCase().trim()
 
-    console.log(`[DASHBOARD_REDIRECT] User: ${user.email}, Role: ${rawRole}, Normalized: ${userRole}`)
-
-    // Redirect based on role
     switch (userRole) {
         case 'admin':
-            console.log(`[DASHBOARD_REDIRECT] Redirecting to /dashboard/admin`)
             return redirect('/dashboard/admin')
         case 'club_lead':
         case 'lead':
-            console.log(`[DASHBOARD_REDIRECT] Redirecting to /dashboard/lead`)
             return redirect('/dashboard/lead')
         case 'student':
         default:
-            console.log(`[DASHBOARD_REDIRECT] Redirecting to /dashboard/student`)
             return redirect('/dashboard/student')
     }
 }

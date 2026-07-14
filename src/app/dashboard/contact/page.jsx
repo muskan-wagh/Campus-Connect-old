@@ -1,14 +1,22 @@
-import { createSupabaseServer } from '@/lib/supabase/server'
-import ContactSection from '@/components/dashboard/ContactSection'
-import { redirect } from 'next/navigation'
+'use client'
 
-export const dynamic = 'force-dynamic'
+import { DashboardHeader } from '@/components/layout/DashboardHeader'
+import { Card, CardContent } from '@/components/ui/card'
 
-export default async function ContactPage() {
-    const supabase = await createSupabaseServer()
-    const { data: { user } } = await supabase.auth.getUser()
-
-    if (!user) redirect('/auth/login')
-
-    return <ContactSection user={user} />
+export default function ContactPage() {
+  return (
+    <div>
+      <DashboardHeader title="Contact" subtitle="Get in touch with us" />
+      <Card>
+        <CardContent className="p-6">
+          <p className="text-sm text-muted-foreground">
+            Reach out to us at{' '}
+            <a href="mailto:campusconnect@gmail.com" className="text-primary hover:underline font-medium">
+              campusconnect@gmail.com
+            </a>
+          </p>
+        </CardContent>
+      </Card>
+    </div>
+  )
 }

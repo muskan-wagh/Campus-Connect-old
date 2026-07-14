@@ -1,144 +1,150 @@
 import { createSupabaseServer } from '@/lib/supabase/server'
-import Header from '@/components/dashboard/Header'
-import Link from 'next/link'
-import { redirect } from 'next/navigation'
-import { revalidatePath } from 'next/cache'
+import { notFound, redirect } from 'next/navigation'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Separator } from '@/components/ui/separator'
 
-export default async function ClubReview({ params }) {
-    const { id } = await params
-    const supabase = await createSupabaseServer()
-    const { data: { user } } = await supabase.auth.getUser()
+async function approveClub(clubId) {
+  'use server'
+  const supabase = await createSupabaseServer()
+  await supabase.from('clubs').update({ is_approved: true }).eq('id', clubId)
 
-    const { data: club } = await supabase
-        .from('clubs')
-        .select(`
-            *,
-            club_members(
-                role,
-                profiles(full_name, email)
-            )
-        `)
-        .eq('id', id)
-        .single()
+  const { data: members } = await supabase
+    .from('club_members')
+    .select('user_id')
+    .eq('club_id', clubId)
+    .eq('role', 'lead')
 
-    if (!club) {
-        return <div className="p-10 text-center">Protocol Error: Club instance not found.</div>
+  if (members) {
+    for (const member of members) {
+      await supabase.from('notifications').insert({
+        user_id: member.user_id,
+        title: 'Club Approved',
+        message: 'Your club has been approved and is now visible to everyone.',
+        type: 'success',
+        link: `/dashboard/clubs/${clubId}`,
+        created_at: new Date().toISOString()
+      })
     }
+  }
 
-    const lead = club.club_members.find(m => m.role === 'lead')?.profiles
+  redirect('/dashboard/admin/verify-clubs')
+}
 
-    return (
-        <div className="pb-12 text-[#1E1E2D]">
-            <Header
-                title="Club Intelligence Review"
-                subtitle={`Analyzing registration data for ${club.name}`}
-                user={user}
-            />
+async function rejectClub(clubId) {
+  'use server'
+  const supabase = await createSupabaseServer()
+  const { data: members } = await supabase
+    .from('club_members')
+    .select('user_id')
+    .eq('club_id', clubId)
 
-            <div className="px-10 max-w-4xl">
-                <div className="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden">
-                    <div className="p-10 border-b border-gray-50 flex items-center justify-between">
-                        <div className="flex items-center gap-6">
-                            <div className="w-20 h-20 bg-[#f5f7f9] rounded-[1.5rem] flex items-center justify-center text-4xl">
-                                🏢
-                            </div>
-                            <div>
-                                <h2 className="text-3xl font-black tracking-tight">{club.name}</h2>
-                                <p className="text-gray-500 font-medium">Internal ID: {club.id}</p>
-                            </div>
-                        </div>
-                        <div className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest ${club.is_approved ? 'bg-[#0b87bd]/10 text-[#0b87bd]' : 'bg-slate-950/10 text-slate-950'}`}>
-                            {club.is_approved ? 'Verified' : 'Awaiting Review'}
-                        </div>
-                    </div>
+  if (members) {
+    for (const member of members) {
+      await supabase.from('notifications').insert({
+        user_id: member.user_id,
+        title: 'Club Rejected',
+        message: 'Your club application has been declined.',
+        type: 'error',
+        created_at: new Date().toISOString()
+      })
+    }
+  }
 
-                    <div className="p-10 space-y-12">
-                        <section>
-                            <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Mission Statement</h3>
-                            <p className="text-gray-900 font-medium leading-relaxed bg-[#f5f7f9] p-8 rounded-2xl border border-gray-100 italic">
-                                "{club.description}"
-                            </p>
-                        </section>
+  await supabase.from('club_members').delete().eq('club_id', clubId)
+  await supabase.from('events').delete().eq('club_id', clubId)
+  await supabase.from('clubs').delete().eq('id', clubId)
+  redirect('/dashboard/admin/verify-clubs')
+}
 
-                        <div className="grid grid-cols-2 gap-10">
-                            <section>
-                                <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Leadership Identity</h3>
-                                <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 rounded-full bg-gray-900 flex items-center justify-center text-white font-black text-xs">
-                                        {lead?.full_name?.[0]}
-                                    </div>
-                                    <div>
-                                        <p className="font-black text-[#1E1E2D]">{lead?.full_name || 'Anonymous Lead'}</p>
-                                        <p className="text-xs text-gray-500 font-medium">{lead?.email}</p>
-                                    </div>
-                                </div>
-                            </section>
-                            <section>
-                                <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Registration Analytics</h3>
-                                <p className="text-sm font-bold text-[#1E1E2D]">Submitted: <span className="text-gray-500">{new Date(club.created_at).toLocaleDateString()}</span></p>
-                                <p className="text-sm font-bold text-[#1E1E2D]">Member Count: <span className="text-gray-500">{club.club_members.length}</span></p>
-                            </section>
-                        </div>
+export default async function ClubReviewPage({ params }) {
+  const { id } = await params
+  const supabase = await createSupabaseServer()
 
-                        <div className="pt-10 border-t border-gray-100 flex items-center gap-4">
-                            <form action={async () => {
-                                'use server'
-                                const s = await createSupabaseServer()
+  const { data: club } = await supabase.from('clubs').select('*').eq('id', id).single()
+  if (!club) notFound()
 
-                                // Get the lead's user_id first
-                                const { data: members } = await s
-                                    .from('club_members')
-                                    .select('user_id')
-                                    .eq('club_id', id)
-                                    .eq('role', 'lead')
-                                    .single()
+  const { data: leads } = await supabase
+    .from('club_members')
+    .select('profiles(full_name, email)')
+    .eq('club_id', id)
+    .eq('role', 'lead')
 
-                                const { error: updateError } = await s.from('clubs').update({ is_approved: true }).eq('id', id)
-                                if (updateError) {
-                                    throw new Error(`Approval failed: ${updateError.message}`)
-                                }
+  const { count: membersCount } = await supabase
+    .from('club_members')
+    .select('*', { count: 'exact', head: true })
+    .eq('club_id', id)
 
-                                // Create notification for the lead
-                                if (members?.user_id) {
-                                    await s.from('notifications').insert({
-                                        user_id: members.user_id,
-                                        title: 'Club Verified',
-                                        message: `Great news! "${club.name}" has been officially verified by the administration. You can now manage events.`,
-                                        type: 'success',
-                                        link: `/dashboard/lead`
-                                    })
-                                }
+  return (
+    <div className="max-w-lg mx-auto">
+      <div className="mb-8">
+        <h1 className="text-2xl font-semibold tracking-tight">{club.name}</h1>
+        <p className="text-sm text-muted-foreground mt-1">Review club details</p>
+      </div>
 
-                                revalidatePath('/dashboard/admin')
-                                revalidatePath('/dashboard/admin/verify-clubs')
-                                revalidatePath('/dashboard/clubs')
-                                redirect('/dashboard/admin/verify-clubs')
-                            }} className="flex-grow">
-                                <button className="w-full py-4 bg-[#0b87bd] hover:bg-[#096a96] text-white rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all shadow-xl shadow-[#0b87bd]/20">
-                                    Approve Organization
-                                </button>
-                            </form>
-                            <form action={async () => {
-                                'use server'
-                                const s = await createSupabaseServer()
-                                // In a real app we might delete or mark as declined
-                                const { error: deleteError } = await s.from('clubs').delete().eq('id', id)
-                                if (deleteError) {
-                                    throw new Error(`Rejection failed: ${deleteError.message}`)
-                                }
-                                revalidatePath('/dashboard/admin')
-                                revalidatePath('/dashboard/admin/verify-clubs')
-                                revalidatePath('/dashboard/clubs')
-                                redirect('/dashboard/admin/verify-clubs')
-                            }}>
-                                <button className="px-10 py-4 bg-red-50 text-red-500 hover:bg-red-100 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all">
-                                    Reject
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
+      <div className="space-y-6">
+        <Card>
+          <CardContent className="p-6 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="h-12 w-12 rounded-lg bg-muted border overflow-hidden flex items-center justify-center">
+                {club.logo_url ? (
+                  <img src={club.logo_url} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  <span className="text-lg font-medium text-muted-foreground">{club.name?.[0]}</span>
+                )}
+              </div>
+              <div>
+                <h2 className="font-semibold">{club.name}</h2>
+                <Badge variant={club.is_approved ? 'success' : 'warning'}>
+                  {club.is_approved ? 'Approved' : 'Pending'}
+                </Badge>
+              </div>
             </div>
-        </div>
-    )
+
+            {club.description && (
+              <p className="text-sm text-muted-foreground">{club.description}</p>
+            )}
+
+            <Separator />
+
+            <div className="text-sm">
+              <span className="text-muted-foreground">ID: </span>
+              <span className="font-mono text-xs">{club.id}</span>
+            </div>
+
+            {leads && leads.length > 0 && (
+              <div>
+                <h3 className="text-sm font-medium mb-2">Lead(s)</h3>
+                {leads.map((lead, i) => (
+                  <p key={i} className="text-sm text-muted-foreground">{lead.profiles?.full_name} ({lead.profiles?.email})</p>
+                ))}
+              </div>
+            )}
+
+            <div className="text-sm">
+              <span className="text-muted-foreground">Members: </span>
+              <span>{membersCount}</span>
+            </div>
+
+            <div className="text-sm">
+              <span className="text-muted-foreground">Created: </span>
+              <span>{new Date(club.created_at).toLocaleDateString()}</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        {!club.is_approved && (
+          <div className="flex gap-3">
+            <form action={approveClub.bind(null, club.id)} className="flex-1">
+              <Button type="submit" className="w-full">Approve club</Button>
+            </form>
+            <form action={rejectClub.bind(null, club.id)} className="flex-1">
+              <Button type="submit" variant="destructive" className="w-full">Reject</Button>
+            </form>
+          </div>
+        )}
+      </div>
+    </div>
+  )
 }

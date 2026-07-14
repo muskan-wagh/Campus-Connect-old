@@ -1,193 +1,190 @@
-import { createSupabaseServer, createSupabaseAnon } from '@/lib/supabase/server'
-import Header from '@/components/dashboard/Header'
-import Link from 'next/link'
+import { createSupabaseServer, getUserProfile } from '@/lib/supabase/server'
 import { unstable_cache } from 'next/cache'
+import Link from 'next/link'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { CalendarDays, Building2, Users, ArrowRight } from 'lucide-react'
 
-const getGlobalStudentStats = unstable_cache(
-    async () => {
-        const supabase = createSupabaseAnon()
-        if (!supabase) return { eventsCount: 0, clubsCount: 0 }
+const getStudentStats = unstable_cache(
+  async () => {
+    const supabase = await createSupabaseServer()
+    if (!supabase) return { clubsCount: 0, eventsCount: 0 }
 
-        const [
-            { count: eventsCount },
-            { count: clubsCount }
-        ] = await Promise.all([
-            supabase.from('events').select('*', { count: 'exact', head: true }).eq('status', 'published'),
-            supabase.from('clubs').select('*', { count: 'exact', head: true }).eq('is_approved', true)
-        ])
-        return { eventsCount, clubsCount }
-    },
-    ['global-student-stats'],
-    { revalidate: 60, tags: ['events', 'clubs'] }
-)
-
-const getUserMemberships = unstable_cache(
-    async (userId) => {
-        const supabase = createSupabaseAnon()
-        if (!supabase) return { myMemberships: [], myCommunitiesCount: 0 }
-
-        const { data: myMemberships, count: myCommunitiesCount } = await supabase
-            .from('club_members')
-            .select('*, clubs(*)', { count: 'exact' })
-            .eq('user_id', userId)
-        return { myMemberships, myCommunitiesCount }
-    },
-    ['user-memberships'],
-    { revalidate: 60, tags: ['memberships'] }
+    const { count: clubsCount } = await supabase.from('clubs').select('*', { count: 'exact', head: true }).eq('is_approved', true)
+    const { count: eventsCount } = await supabase.from('events').select('*', { count: 'exact', head: true }).eq('status', 'published')
+    return { clubsCount, eventsCount }
+  },
+  ['student-stats'],
+  { revalidate: 60 }
 )
 
 const getUpcomingEvents = unstable_cache(
-    async () => {
-        const supabase = createSupabaseAnon()
-        if (!supabase) return []
+  async () => {
+    const supabase = await createSupabaseServer()
+    if (!supabase) return []
 
-        const { data: upcomingEvents } = await supabase
-            .from('events')
-            .select('*, clubs(name, logo_url)')
-            .eq('status', 'published')
-            .order('event_date', { ascending: true })
-            .limit(5)
-        return upcomingEvents
-    },
-    ['upcoming-events'],
-    { revalidate: 60, tags: ['events'] }
+    const { data } = await supabase
+      .from('events')
+      .select('*, clubs(name, logo_url)')
+      .eq('status', 'published')
+      .order('created_at', { ascending: false })
+      .limit(6)
+    return data || []
+  },
+  ['student-upcoming-events'],
+  { revalidate: 30 }
+)
+
+const getMyMemberships = unstable_cache(
+  async (userId) => {
+    const supabase = await createSupabaseServer()
+    if (!supabase) return []
+
+    const { data } = await supabase
+      .from('club_members')
+      .select('*, clubs(id, name, logo_url)')
+      .eq('user_id', userId)
+    return data || []
+  },
+  ['my-memberships'],
+  { revalidate: 60 }
 )
 
 export default async function StudentDashboard() {
-    const supabase = await createSupabaseServer()
-    const { data: { user } } = await supabase.auth.getUser()
+  const { user } = await getUserProfile()
+  const stats = await getStudentStats()
+  const events = await getUpcomingEvents()
+  const memberships = await getMyMemberships(user.id)
 
-    // Fetch stats and data with cache
-    const [
-        { eventsCount, clubsCount },
-        { myMemberships, myCommunitiesCount },
-        upcomingEvents
-    ] = await Promise.all([
-        getGlobalStudentStats(),
-        getUserMemberships(user.id),
-        getUpcomingEvents()
-    ])
+  return (
+    <div className="space-y-10">
+      <div>
+        <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Student Dashboard</h1>
+        <p className="text-sm text-muted-foreground mt-1.5">Welcome back! Here&apos;s what&apos;s happening on campus.</p>
+      </div>
 
-    const myClubs = myMemberships?.map(m => m.clubs) || []
-
-    const stats = [
-        { name: 'Live Comms', value: eventsCount || 0, icon: '01' },
-        { name: 'Active Nodes', value: clubsCount || 0, icon: '02' },
-        { name: 'My Frequency', value: myCommunitiesCount || 0, icon: '03' },
-    ]
-
-    return (
-        <div className="pb-24">
-            <Header
-                title="Student Hub"
-                subtitle="MONITORING CAMPUS SYNC"
-                user={user}
-            />
-
-            <div className="space-y-20 md:space-y-32">
-                {/* Minimal Stats Section */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-12 border-b border-border pb-10 md:pb-16">
-                    {stats.map((stat) => (
-                        <div key={stat.name} className="group">
-                            <div className="flex items-center gap-3 mb-2 md:mb-4">
-                                <span className="font-serif italic text-lg opacity-30 tracking-tight">{stat.icon}</span>
-                                <span className="journal-label mb-0">{stat.name}</span>
-                            </div>
-                            <div className="flex items-baseline gap-4">
-                                <h2 className="text-5xl md:text-7xl font-serif text-foreground leading-none">{stat.value}</h2>
-                                <span className="text-[10px] text-muted-foreground/30 uppercase tracking-widest font-bold">In-Matrix</span>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-
-                {/* Main Content Layout */}
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-24">
-
-                    {/* Left Column: Events Feed */}
-                    <div className="lg:col-span-8 space-y-16">
-                        <div className="flex items-center gap-3 mb-12">
-                            <span className="font-serif italic text-2xl">A.</span>
-                            <h2 className="text-xl font-serif">Current Transmissions</h2>
-                        </div>
-
-                        <div className="space-y-16">
-                            {upcomingEvents?.length > 0 ? upcomingEvents.map((event) => (
-                                <article key={event.id} className="group border-b border-border pb-12 last:border-0">
-                                    <div className="flex flex-col md:flex-row justify-between items-start gap-8">
-                                        <div className="flex-1">
-                                            <div className="flex items-center gap-3 mb-4">
-                                                <span className="journal-label mb-0 text-primary">{event.clubs?.name}</span>
-                                                <span className="w-1 h-1 bg-border rounded-full"></span>
-                                                <span className="journal-label mb-0">{new Date(event.event_date).toLocaleDateString()}</span>
-                                            </div>
-
-                                            <h3 className="text-2xl md:text-4xl font-serif mb-4 md:mb-6 group-hover:text-primary transition-colors leading-tight">{event.title}</h3>
-                                            <p className="text-sm text-muted-foreground font-light leading-relaxed mb-6 md:mb-8 max-w-xl">{event.description}</p>
-
-                                            <div className="flex items-center gap-6">
-                                                <span className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground/50">@{event.location}</span>
-                                                <Link href={`/dashboard/events/${event.id}`} className="text-[10px] uppercase tracking-widest font-bold border-b border-primary pb-1 hover:text-primary/70 hover:border-primary/70 transition-all">
-                                                    Full Briefing &rarr;
-                                                </Link>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </article>
-                            )) : (
-                                <div className="p-20 border border-border bg-muted/30 text-center">
-                                    <p className="journal-label opacity-40">Zero active transmissions detected in this cycle.</p>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Right Column: Sidebar info */}
-                    <div className="lg:col-span-4 space-y-16">
-                        {/* Connected Nodes */}
-                        <section>
-                            <div className="flex items-center gap-3 mb-12">
-                                <span className="font-serif italic text-2xl">B.</span>
-                                <h2 className="text-xl font-serif">Verified Nodes</h2>
-                            </div>
-
-                            <div className="space-y-8">
-                                {myClubs.length > 0 ? myClubs.map((club) => (
-                                    <Link key={club.id} href={`/dashboard/clubs/${club.id}`} className="flex items-center gap-5 group border-b border-border pb-4 last:border-0 hover:border-primary/30 transition-colors">
-                                        <div className="w-12 h-12 bg-muted grayscale border border-border flex items-center justify-center overflow-hidden transition-all group-hover:grayscale-0 rounded-sm">
-                                            {club.logo_url ? (
-                                                <img src={club.logo_url} alt={club.name} className="w-full h-full object-cover" />
-                                            ) : (
-                                                <span className="font-serif italic text-muted-foreground/50">{club.name[0]}</span>
-                                            )}
-                                        </div>
-                                        <div className="min-w-0">
-                                            <h4 className="text-[12px] font-bold uppercase tracking-widest text-foreground truncate group-hover:text-primary transition-colors">{club.name}</h4>
-                                            <p className="text-[9px] text-muted-foreground/50 uppercase tracking-widest mt-1">NODE VERIFIED</p>
-                                        </div>
-                                    </Link>
-                                )) : (
-                                    <p className="journal-label opacity-30 text-center py-10">0 Active Clusters</p>
-                                )}
-                            </div>
-
-                            <Link href="/dashboard/clubs" className="btn-secondary w-full text-center mt-12 block py-4 text-[10px]">
-                                Browse All Clusters
-                            </Link>
-                        </section>
-
-                        {/* CTA Section - Minimal */}
-                        <section className="bg-primary p-10 text-primary-foreground cursor-pointer select-none rounded-sm">
-                            <div className="journal-label text-primary-foreground/70 mb-4 tracking-[0.4em]">Promotion Request</div>
-                            <h4 className="text-2xl font-serif mb-6 leading-snug">Become a Lead Communicator</h4>
-                            <p className="text-[11px] text-primary-foreground/70 leading-relaxed font-light mb-8 italic">Apply to bridge directly with the campus mainframe and manage your own transmissions.</p>
-                            <Link href="/dashboard/about" className="text-[10px] font-bold uppercase tracking-widest border-b border-primary-foreground pb-1 group hover:border-primary-foreground/80 hover:text-primary-foreground/80 transition-all">
-                                View Requirements &rarr;
-                            </Link>
-                        </section>
-                    </div>
-                </div>
-            </div>
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
+        <div className="group rounded-2xl border border-border bg-card p-6 hover:shadow-sm hover:border-foreground/20 transition-all duration-300">
+          <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+            <CalendarDays className="h-5 w-5" />
+          </div>
+          <div className="text-[clamp(1.5rem,3vw,2.25rem)] font-bold tracking-[-0.03em] leading-none mb-1">
+            {stats.eventsCount}
+          </div>
+          <div className="text-sm text-muted-foreground">Active Events</div>
         </div>
-    )
+        <div className="group rounded-2xl border border-border bg-card p-6 hover:shadow-sm hover:border-foreground/20 transition-all duration-300">
+          <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+            <Building2 className="h-5 w-5" />
+          </div>
+          <div className="text-[clamp(1.5rem,3vw,2.25rem)] font-bold tracking-[-0.03em] leading-none mb-1">
+            {stats.clubsCount}
+          </div>
+          <div className="text-sm text-muted-foreground">Active Clubs</div>
+        </div>
+        <div className="group rounded-2xl border border-border bg-card p-6 hover:shadow-sm hover:border-foreground/20 transition-all duration-300">
+          <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
+            <Users className="h-5 w-5" />
+          </div>
+          <div className="text-[clamp(1.5rem,3vw,2.25rem)] font-bold tracking-[-0.03em] leading-none mb-1">
+            {memberships.length}
+          </div>
+          <div className="text-sm text-muted-foreground">My Clubs</div>
+        </div>
+      </div>
+
+      <div className="grid gap-8 lg:grid-cols-3">
+        <div className="lg:col-span-2 space-y-5">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold">Upcoming Events</h2>
+            <Link href="/dashboard/student/events">
+              <Button variant="ghost" size="sm" className="gap-1.5">
+                View all <ArrowRight className="h-3.5 w-3.5" />
+              </Button>
+            </Link>
+          </div>
+          <div className="grid sm:grid-cols-2 gap-4">
+            {events.map((event) => (
+              <Link key={event.id} href={`/dashboard/events/${event.id}`} className="group block">
+                <div className="rounded-2xl border border-border bg-card p-5 hover:shadow-sm hover:border-foreground/20 transition-all duration-300 h-full flex flex-col">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="h-7 w-7 rounded-lg bg-muted border overflow-hidden flex items-center justify-center shrink-0">
+                      {event.clubs?.logo_url ? (
+                        <img src={event.clubs.logo_url} alt="" className="h-full w-full object-cover" />
+                      ) : (
+                        <CalendarDays className="h-3.5 w-3.5 text-muted-foreground" />
+                      )}
+                    </div>
+                    <span className="text-xs text-muted-foreground truncate">{event.clubs?.name}</span>
+                  </div>
+                  <h3 className="font-medium text-sm mb-1 line-clamp-1 group-hover:text-foreground transition-colors">{event.title}</h3>
+                  {event.description && (
+                    <p className="text-xs text-muted-foreground line-clamp-2 mb-3 flex-1">{event.description}</p>
+                  )}
+                  <div className="flex items-center justify-between pt-3 border-t border-border mt-auto">
+                    <span className="text-xs text-muted-foreground">{new Date(event.created_at).toLocaleDateString()}</span>
+                    {event.location && (
+                      <span className="text-xs text-muted-foreground truncate ml-2">{event.location}</span>
+                    )}
+                  </div>
+                </div>
+              </Link>
+            ))}
+            {events.length === 0 && (
+              <div className="col-span-2 text-center py-16">
+                <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-muted mb-4">
+                  <CalendarDays className="h-6 w-6 text-muted-foreground" />
+                </div>
+                <p className="text-sm text-muted-foreground">No upcoming events. Check back soon!</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="space-y-5">
+          <h2 className="text-lg font-semibold">My Clubs</h2>
+          {memberships.length > 0 ? (
+            <div className="space-y-3">
+              {memberships.map((m) => (
+                <Link key={m.club_id} href={`/dashboard/clubs/${m.club_id}`} className="group block">
+                  <div className="rounded-2xl border border-border bg-card p-4 hover:shadow-sm hover:border-foreground/20 transition-all duration-300">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-xl bg-muted border overflow-hidden flex items-center justify-center shrink-0">
+                        {m.clubs?.logo_url ? (
+                          <img src={m.clubs.logo_url} alt="" className="h-full w-full object-cover" />
+                        ) : (
+                          <span className="text-sm font-medium text-muted-foreground">{m.clubs?.name?.[0]}</span>
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium truncate group-hover:text-foreground transition-colors">{m.clubs?.name}</p>
+                        <Badge variant="secondary" className="capitalize mt-1">{m.role}</Badge>
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-border bg-card p-8 text-center">
+              <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-muted mb-4">
+                <Building2 className="h-6 w-6 text-muted-foreground" />
+              </div>
+              <p className="text-sm text-muted-foreground mb-4">You haven&apos;t joined any clubs yet.</p>
+              <Link href="/dashboard/clubs">
+                <Button variant="outline" size="sm">Browse clubs</Button>
+              </Link>
+            </div>
+          )}
+
+          <Link href="/dashboard/clubs">
+            <Button variant="outline" className="w-full gap-1.5">
+              Browse all clubs <ArrowRight className="h-3.5 w-3.5" />
+            </Button>
+          </Link>
+        </div>
+      </div>
+    </div>
+  )
 }

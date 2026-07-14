@@ -3,302 +3,170 @@
 import { useState, useEffect } from 'react'
 import { createSupabaseClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import Header from '@/components/dashboard/Header'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Select } from '@/components/ui/select'
+import { Card, CardContent } from '@/components/ui/card'
+import { Avatar } from '@/components/ui/avatar'
+import { DashboardHeader } from '@/components/layout/DashboardHeader'
 
 export default function EditProfilePage() {
-    const [profile, setProfile] = useState(null)
-    const [fullName, setFullName] = useState('')
-    const [instituteName, setInstituteName] = useState('')
-    const [educationLevel, setEducationLevel] = useState('')
-    const [degree, setDegree] = useState('')
-    const [academicYear, setAcademicYear] = useState('')
-    const [avatarFile, setAvatarFile] = useState(null)
-    const [previewUrl, setPreviewUrl] = useState('')
-    const [coverFile, setCoverFile] = useState(null)
-    const [coverPreviewUrl, setCoverPreviewUrl] = useState('')
-    const [loading, setLoading] = useState(false)
-    const [fetching, setFetching] = useState(true)
-    const [error, setError] = useState(null)
-    const [success, setSuccess] = useState(false)
+  const [fullName, setFullName] = useState('')
+  const [instituteName, setInstituteName] = useState('')
+  const [educationLevel, setEducationLevel] = useState('')
+  const [degree, setDegree] = useState('')
+  const [academicYear, setAcademicYear] = useState('')
+  const [avatarFile, setAvatarFile] = useState(null)
+  const [coverFile, setCoverFile] = useState(null)
+  const [avatarUrl, setAvatarUrl] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(null)
+  const [success, setSuccess] = useState(false)
+  const router = useRouter()
+  const supabase = createSupabaseClient()
 
-    const supabase = createSupabaseClient()
-    const router = useRouter()
+  useEffect(() => {
+    const loadProfile = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
 
-    useEffect(() => {
-        fetchProfile()
-    }, [])
-
-    const fetchProfile = async () => {
-        try {
-            const { data: { user } } = await supabase.auth.getUser()
-            if (!user) {
-                router.push('/auth/login')
-                return
-            }
-
-            const { data, error } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', user.id)
-                .single()
-
-            if (error) throw error
-
-            setProfile(data)
-            setFullName(data.full_name || '')
-            setInstituteName(data.institute_name || '')
-            setEducationLevel(data.education_level || 'Bachelors')
-            setDegree(data.degree || '')
-            setAcademicYear(data.academic_year || '')
-            setPreviewUrl(data.avatar_url || '')
-            setCoverPreviewUrl(data.cover_image || '')
-        } catch (err) {
-            console.error('Error fetching profile:', err)
-            setError('Could not load profile data.')
-        } finally {
-            setFetching(false)
-        }
+      const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+      if (profile) {
+        setFullName(profile.full_name || '')
+        setInstituteName(profile.institute_name || '')
+        setEducationLevel(profile.education_level || '')
+        setDegree(profile.degree || '')
+        setAcademicYear(profile.academic_year || '')
+        setAvatarUrl(profile.avatar_url || '')
+      }
     }
+    loadProfile()
+  }, [])
 
-    const handleFileChange = (e) => {
-        const file = e.target.files[0]
-        if (file) {
-            setAvatarFile(file)
-            setPreviewUrl(URL.createObjectURL(file))
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setLoading(true)
+    setError(null)
+    setSuccess(false)
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Not authenticated')
+
+      let newAvatarUrl = avatarUrl
+
+      if (avatarFile) {
+        const ext = avatarFile.name.split('.').pop()
+        const path = `${user.id}/avatar.${ext}`
+        const { error: upErr } = await supabase.storage.from('profiles').upload(path, avatarFile, { upsert: true })
+        if (!upErr) {
+          const { data: { publicUrl } } = supabase.storage.from('profiles').getPublicUrl(path)
+          newAvatarUrl = publicUrl
         }
+      }
+
+      if (coverFile) {
+        const ext = coverFile.name.split('.').pop()
+        const path = `${user.id}/cover.${ext}`
+        await supabase.storage.from('profiles').upload(path, coverFile, { upsert: true })
+      }
+
+      const { error: updateErr } = await supabase
+        .from('profiles')
+        .update({
+          full_name: fullName,
+          institute_name: instituteName,
+          education_level: educationLevel,
+          degree,
+          academic_year: academicYear,
+          avatar_url: newAvatarUrl,
+        })
+        .eq('id', user.id)
+
+      if (updateErr) throw updateErr
+
+      setSuccess(true)
+      setTimeout(() => router.push('/dashboard/profile'), 1500)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
     }
+  }
 
-    const handleCoverChange = (e) => {
-        const file = e.target.files[0]
-        if (file) {
-            setCoverFile(file)
-            setCoverPreviewUrl(URL.createObjectURL(file))
-        }
-    }
+  return (
+    <div className="max-w-lg mx-auto">
+      <DashboardHeader title="Edit Profile" subtitle="Update your personal information" />
 
-    const handleUpdate = async (e) => {
-        e.preventDefault()
-        setLoading(true)
-        setError(null)
-        setSuccess(false)
-
-        try {
-            const { data: { user } } = await supabase.auth.getUser()
-            let avatarUrl = profile.avatar_url
-            let coverUrl = profile.cover_image
-
-            if (avatarFile) {
-                const fileExt = avatarFile.name.split('.').pop()
-                const fileName = `${Math.random()}.${fileExt}`
-                const filePath = `${user.id}/${fileName}`
-
-                const { error: uploadError } = await supabase.storage
-                    .from('profiles')
-                    .upload(filePath, avatarFile)
-
-                if (uploadError) throw uploadError
-
-                const { data: { publicUrl } } = supabase.storage
-                    .from('profiles')
-                    .getPublicUrl(filePath)
-
-                avatarUrl = publicUrl
-            }
-
-            if (coverFile) {
-                const fileExt = coverFile.name.split('.').pop()
-                const fileName = `cover-${Math.random()}.${fileExt}`
-                const filePath = `${user.id}/${fileName}`
-
-                const { error: uploadError } = await supabase.storage
-                    .from('profiles')
-                    .upload(filePath, coverFile)
-
-                if (uploadError) throw uploadError
-
-                const { data: { publicUrl } } = supabase.storage
-                    .from('profiles')
-                    .getPublicUrl(filePath)
-
-                coverUrl = publicUrl
-            }
-
-            const { error: updateError } = await supabase
-                .from('profiles')
-                .update({
-                    full_name: fullName,
-                    institute_name: instituteName,
-                    education_level: educationLevel,
-                    degree: degree,
-                    academic_year: academicYear,
-                    avatar_url: avatarUrl,
-                    cover_image: coverUrl
-                })
-                .eq('id', user.id)
-
-            if (updateError) throw updateError
-
-            setSuccess(true)
-            setTimeout(() => router.push('/dashboard/profile'), 1500)
-        } catch (err) {
-            console.error('Update error:', err)
-            setError(err.message)
-        } finally {
-            setLoading(false)
-        }
-    }
-
-    if (fetching) return (
-        <div className="min-h-screen flex items-center justify-center bg-background">
-            <div className="w-8 h-8 border-2 border-border border-t-primary rounded-full animate-spin"></div>
-        </div>
-    )
-
-    return (
-        <div className="pb-12 text-foreground">
-            <Header
-                title="Edit Identity"
-                subtitle="MODIFY CORE NODE PARAMETERS"
-            />
-
-            <div className="max-w-2xl mx-auto mt-10">
-                <form onSubmit={handleUpdate} className="space-y-8 bg-card border border-border rounded-[3.5rem] p-12 overflow-hidden shadow-2xl shadow-primary/5 relative">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 blur-3xl -mr-16 -mt-16"></div>
-                    {/* Cover Upload */}
-                    <div className="space-y-4">
-                        <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.3em] ml-1">Profile Cover Graphic</label>
-                        <div className="relative h-48 w-full rounded-[2.5rem] overflow-hidden bg-muted border-2 border-border transition-all group-hover:border-primary/50">
-                            {coverPreviewUrl ? (
-                                <img src={coverPreviewUrl} alt="Cover Preview" className="w-full h-full object-cover" />
-                            ) : (
-                                <div className="w-full h-full bg-muted relative">
-                                    <div className="absolute inset-0 bg-gradient-to-br from-border/20 to-transparent"></div>
-                                </div>
-                            )}
-                            <label htmlFor="cover-upload" className="absolute bottom-4 right-4 px-6 py-3 bg-card text-primary rounded-2xl flex items-center gap-3 cursor-pointer hover:bg-primary hover:text-primary-foreground transition-all shadow-2xl text-[9px] font-black uppercase tracking-widest z-20">
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                                Change Layout
-                                <input type="file" id="cover-upload" className="hidden" accept="image/*" onChange={handleCoverChange} />
-                            </label>
-                        </div>
-                    </div>
-
-                    {/* Avatar Upload */}
-                    <div className="flex flex-col items-center">
-                        <div className="relative group -mt-16">
-                            <div className="w-32 h-32 rounded-[2.5rem] overflow-hidden bg-card p-1 border-4 border-card shadow-2xl shadow-primary/10 relative group">
-                                <div className="w-full h-full rounded-[2rem] overflow-hidden bg-muted flex items-center justify-center">
-                                    {previewUrl ? (
-                                        <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
-                                    ) : (
-                                        <div className="w-full h-full flex items-center justify-center text-4xl font-black text-muted-foreground/30 font-serif italic">
-                                            {fullName?.[0]?.toUpperCase() || '?'}
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                            <label htmlFor="avatar-upload" className="absolute -bottom-2 -right-2 w-12 h-12 bg-primary text-primary-foreground rounded-2xl flex items-center justify-center cursor-pointer hover:opacity-90 transition-all shadow-xl z-20 border-4 border-card">
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                                <input type="file" id="avatar-upload" className="hidden" accept="image/*" onChange={handleFileChange} />
-                            </label>
-                        </div>
-                        <p className="mt-4 text-[10px] font-black text-muted-foreground/50 uppercase tracking-[0.4em]">Update Portrait Graphic</p>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div className="space-y-3">
-                            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] ml-1">Full Identity</label>
-                            <input
-                                type="text"
-                                value={fullName}
-                                onChange={(e) => setFullName(e.target.value)}
-                                className="w-full bg-muted border border-border rounded-2xl px-6 py-4 text-foreground font-bold outline-none focus:border-primary/50 transition-all ring-0"
-                                placeholder="Enter full name"
-                            />
-                        </div>
-                        <div className="space-y-3">
-                            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] ml-1">Institute Node</label>
-                            <input
-                                type="text"
-                                value={instituteName}
-                                onChange={(e) => setInstituteName(e.target.value)}
-                                className="w-full bg-muted border border-border rounded-2xl px-6 py-4 text-foreground font-bold outline-none focus:border-primary/50 transition-all ring-0"
-                                placeholder="Institute Name"
-                            />
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div className="space-y-3">
-                            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] ml-1">Degree Level</label>
-                            <div className="relative">
-                                <select
-                                    value={educationLevel}
-                                    onChange={(e) => setEducationLevel(e.target.value)}
-                                    className="w-full bg-muted border border-border rounded-2xl px-6 py-4 text-foreground font-bold outline-none focus:border-primary/50 transition-all appearance-none cursor-pointer"
-                                >
-                                    <option value="Bachelors">Undergraduate / Bachelors</option>
-                                    <option value="Masters">Postgraduate / Masters</option>
-                                    <option value="PhD">Doctorate / PhD</option>
-                                </select>
-                                <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground/50">
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" /></svg>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="space-y-3">
-                            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] ml-1">Degree Program</label>
-                            <input
-                                type="text"
-                                value={degree}
-                                onChange={(e) => setDegree(e.target.value)}
-                                className="w-full bg-muted border border-border rounded-2xl px-6 py-4 text-foreground font-bold outline-none focus:border-primary/50 transition-all ring-0"
-                                placeholder="e.g. Computer Science"
-                            />
-                        </div>
-                    </div>
-
-                    <div className="space-y-3">
-                        <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] ml-1">Academic Cycle</label>
-                        <input
-                            type="text"
-                            value={academicYear}
-                            onChange={(e) => setAcademicYear(e.target.value)}
-                            className="w-full bg-muted border border-border rounded-2xl px-6 py-4 text-foreground font-bold outline-none focus:border-primary/50 transition-all ring-0"
-                            placeholder="e.g. 3rd Year"
-                        />
-                    </div>
-
-                    {error && (
-                        <div className="p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-500 text-xs font-bold tracking-widest uppercase italic">
-                            Error: {error}
-                        </div>
-                    )}
-
-                    {success && (
-                        <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl text-emerald-500 text-xs font-bold tracking-widest uppercase italic">
-                            Identity updated successfully. Redirecting...
-                        </div>
-                    )}
-
-                    <div className="flex gap-4 pt-10">
-                        <button
-                            type="button"
-                            onClick={() => router.back()}
-                            className="flex-1 px-8 py-5 bg-card text-muted-foreground font-black rounded-2xl uppercase tracking-widest text-[10px] hover:text-primary transition-all border border-border"
-                        >
-                            Abort Sync
-                        </button>
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="flex-[2] px-8 py-5 bg-primary text-primary-foreground font-black rounded-2xl uppercase tracking-widest text-[10px] hover:opacity-90 transition-all disabled:opacity-50 shadow-xl shadow-primary/20"
-                        >
-                            {loading ? 'SYNCHRONIZING...' : 'Commit Core Parameters'}
-                        </button>
-                    </div>
-                </form>
+      <Card>
+        <CardContent className="p-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="flex items-center gap-4 mb-4">
+              <Avatar src={avatarUrl} fallback={fullName?.[0]} size="lg" />
+              <div>
+                <input type="file" accept="image/*" onChange={(e) => setAvatarFile(e.target.files[0])} className="hidden" id="avatar" />
+                <label htmlFor="avatar" className="text-sm text-primary hover:underline cursor-pointer">Change avatar</label>
+                <p className="text-xs text-muted-foreground">Upload a new profile picture</p>
+              </div>
             </div>
-        </div>
-    )
+
+            <div className="space-y-2">
+              <Label htmlFor="name">Full name</Label>
+              <Input id="name" value={fullName} onChange={(e) => setFullName(e.target.value)} required />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="eduLevel">Education level</Label>
+                <Select id="eduLevel" value={educationLevel} onChange={(e) => setEducationLevel(e.target.value)}>
+                  <option value="">Select...</option>
+                  <option value="Bachelors">Bachelors</option>
+                  <option value="Masters">Masters</option>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="degree">Degree</Label>
+                <Input id="degree" value={degree} onChange={(e) => setDegree(e.target.value)} />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="year">Academic year</Label>
+                <Input id="year" value={academicYear} onChange={(e) => setAcademicYear(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="institute">Institute</Label>
+                <Input id="institute" value={instituteName} onChange={(e) => setInstituteName(e.target.value)} />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Cover image</Label>
+              <input type="file" accept="image/*" onChange={(e) => setCoverFile(e.target.files[0])} className="hidden" id="cover" />
+              <label htmlFor="cover" className="flex items-center gap-3 h-10 rounded-lg border border-input bg-background px-3 text-sm text-muted-foreground hover:bg-accent transition-all cursor-pointer">
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span className="truncate">{coverFile ? coverFile.name : 'Upload cover image'}</span>
+              </label>
+            </div>
+
+            {error && (
+              <div className="rounded-lg bg-destructive/5 border border-destructive/10 p-3 text-sm text-destructive">{error}</div>
+            )}
+
+            {success && (
+              <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-3 text-sm text-emerald-700">Profile updated successfully!</div>
+            )}
+
+            <Button type="submit" loading={loading} className="w-full">
+              {loading ? 'Saving...' : 'Save changes'}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
+  )
 }
