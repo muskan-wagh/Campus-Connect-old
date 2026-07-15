@@ -1,30 +1,27 @@
 'use client'
 
 import { useState } from 'react'
+import { useFormState } from '@/hooks/use-form-state'
 import { createSupabaseClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { Alert } from '@/components/ui/alert'
 import { Card, CardContent } from '@/components/ui/card'
 import { DashboardHeader } from '@/components/layout/DashboardHeader'
 
 export default function NewClubPage() {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
-  const [success, setSuccess] = useState(false)
+  const { loading, error, success, handleSubmit } = useFormState()
   const router = useRouter()
   const supabase = createSupabaseClient()
 
-  const handleSubmit = async (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault()
-    setLoading(true)
-    setError(null)
-
-    try {
+    await handleSubmit(async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Not authenticated')
 
@@ -42,13 +39,8 @@ export default function NewClubPage() {
 
       if (memberErr) throw memberErr
 
-      setSuccess(true)
       setTimeout(() => router.push(`/dashboard/clubs/${club.id}`), 2000)
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setLoading(false)
-    }
+    })
   }
 
   if (success) {
@@ -70,7 +62,7 @@ export default function NewClubPage() {
       <DashboardHeader title="Register Club" subtitle="Create a new club on the platform" />
       <Card>
         <CardContent className="p-6">
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={onSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name">Club name</Label>
               <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter club name" required />
@@ -79,9 +71,7 @@ export default function NewClubPage() {
               <Label htmlFor="desc">Description</Label>
               <Textarea id="desc" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Describe your club" rows={4} />
             </div>
-            {error && (
-              <div className="rounded-lg bg-destructive/5 border border-destructive/10 p-3 text-sm text-destructive">{error}</div>
-            )}
+            {error && <Alert variant="error">{error}</Alert>}
             <Button type="submit" loading={loading} className="w-full">
               {loading ? 'Registering...' : 'Register club'}
             </Button>

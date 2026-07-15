@@ -4,6 +4,8 @@ import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { StatCard } from '@/components/ui/stat-card'
+import { Building2, Clock, Users } from 'lucide-react'
 
 const getAdminStats = unstable_cache(
   async () => {
@@ -46,30 +48,9 @@ export default async function AdminDashboard() {
       </div>
 
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Clubs</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-semibold">{stats.clubsCount}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Pending Review</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-semibold">{stats.pendingClubs}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Members</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-semibold">{stats.membersCount}</div>
-          </CardContent>
-        </Card>
+        <StatCard icon={Building2} label="Total Clubs" value={stats.clubsCount} color="bg-indigo-50 text-indigo-600" />
+        <StatCard icon={Clock} label="Pending Review" value={stats.pendingClubs} color="bg-amber-50 text-amber-600" />
+        <StatCard icon={Users} label="Members" value={stats.membersCount} color="bg-emerald-50 text-emerald-600" />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">

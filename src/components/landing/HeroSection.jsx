@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion'
 import Link from 'next/link'
-import { ArrowRight, Calendar, Users, Bell, Activity } from 'lucide-react'
+import { ArrowRight, Calendar, Bell, Activity } from 'lucide-react'
 
 const containerVariants = {
   hidden: { opacity: 0 },

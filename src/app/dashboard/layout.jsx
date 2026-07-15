@@ -1,29 +1,12 @@
-import { getUserProfile, createSupabaseServer } from '@/lib/supabase/server'
+import { getUserProfile } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import DashboardClientLayout from '@/components/layout/DashboardClientLayout'
 
 export default async function DashboardLayout({ children }) {
-  let { user, profile } = await getUserProfile()
+  const { user, profile } = await getUserProfile()
 
   if (!user) {
     redirect('/auth/login')
-  }
-
-  const supabase = await createSupabaseServer()
-
-  if (!profile && user.user_metadata) {
-    profile = {
-      id: user.id,
-      full_name: user.user_metadata.full_name || user.email.split('@')[0],
-      role: user.user_metadata.role || 'student',
-      institute_name: user.user_metadata.institute_name || 'Campus Connect',
-      avatar_url: user.user_metadata.avatar_url || null,
-      email: user.email
-    }
-
-    try {
-      await supabase.from('profiles').upsert(profile)
-    } catch (e) {}
   }
 
   if (!profile) {

@@ -1,6 +1,14 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
 
+function getRoleFromUser(user) {
+  const raw = (user?.user_metadata?.role || 'student').toLowerCase().trim()
+  if (raw === 'lead' || raw === 'club_lead') return 'lead'
+  return raw
+}
+
+const rolePaths = ['admin', 'lead', 'student']
+
 export async function middleware(req) {
     let res = NextResponse.next({
         request: {
@@ -41,26 +49,43 @@ export async function middleware(req) {
         }
     )
 
-    // IMPORTANT: Use getUser() instead of getSession() for security
     const { data: { user } } = await supabase.auth.getUser()
 
-    const isDashboard = req.nextUrl.pathname.startsWith('/dashboard')
-    const isAuth = req.nextUrl.pathname.startsWith('/auth')
+    const pathname = req.nextUrl.pathname
+    const isDashboard = pathname.startsWith('/dashboard')
+    const isAuth = pathname.startsWith('/auth')
 
-    // 1. If trying to access dashboard but NOT logged in -> Login
+    // Unauthenticated → login
     if (isDashboard && !user) {
         return NextResponse.redirect(new URL('/auth/login', req.url))
     }
 
-    // 2. If already logged in and trying to access auth pages -> Dashboard
+    // Authenticated on auth pages → dashboard
     if (isAuth && user && !req.nextUrl.searchParams.has('message')) {
         return NextResponse.redirect(new URL('/dashboard', req.url))
+    }
+
+    if (!user) return res
+
+    const role = getRoleFromUser(user)
+
+    // /dashboard → /dashboard/{role}
+    if (pathname === '/dashboard') {
+        return NextResponse.redirect(new URL(`/dashboard/${role}`, req.url))
+    }
+
+    // Cross-role access blocking
+    for (const rp of rolePaths) {
+        if (pathname === `/dashboard/${rp}` || pathname.startsWith(`/dashboard/${rp}/`)) {
+            if (role !== rp) {
+                return NextResponse.redirect(new URL(`/dashboard/${role}`, req.url))
+            }
+        }
     }
 
     return res
 }
 
 export const config = {
-    matcher: ['/dashboard/:path*', '/auth/:path*'],
+    matcher: ['/dashboard/:path*', '/dashboard', '/auth/:path*'],
 }
-

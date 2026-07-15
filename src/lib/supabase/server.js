@@ -50,8 +50,6 @@ export const createSupabaseServer = cache(async () => {
     )
 })
 
-import { redirect } from 'next/navigation'
-
 export const getUserProfile = cache(async () => {
     const supabase = await createSupabaseServer()
     if (!supabase) return { user: null, profile: null }
@@ -68,31 +66,3 @@ export const getUserProfile = cache(async () => {
 
     return { user, profile }
 })
-
-export async function requireRole(allowedRoles) {
-    const { user, profile } = await getUserProfile()
-
-    if (!user) {
-        redirect('/auth/login')
-    }
-
-    const rawRole = profile?.role || user.user_metadata?.role || 'student'
-    const role = rawRole.toLowerCase().trim()
-
-    // Normalize roles for comparison
-    const normalizedAllowedRoles = allowedRoles.map(r => r.toLowerCase().trim())
-
-    // Treat 'lead' and 'club_lead' as equivalent for authorization checks
-    const hasAccess = normalizedAllowedRoles.some(allowed => {
-        if (allowed === 'club_lead' || allowed === 'lead') {
-            return role === 'club_lead' || role === 'lead'
-        }
-        return role === allowed
-    })
-
-    if (!hasAccess) {
-        redirect('/dashboard')
-    }
-
-    return { user, profile, role }
-}

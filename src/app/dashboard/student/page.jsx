@@ -1,9 +1,12 @@
 import { createSupabaseServer, getUserProfile } from '@/lib/supabase/server'
 import { unstable_cache } from 'next/cache'
 import Link from 'next/link'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { StatCard } from '@/components/ui/stat-card'
+import { EventCard } from '@/components/ui/event-card'
+import { EmptyState } from '@/components/ui/empty-state'
+import { EntityLogo } from '@/components/ui/entity-logo'
 import { CalendarDays, Building2, Users, ArrowRight } from 'lucide-react'
 
 const getStudentStats = unstable_cache(
@@ -65,33 +68,9 @@ export default async function StudentDashboard() {
       </div>
 
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
-        <div className="group rounded-2xl border border-border bg-card p-6 hover:shadow-sm hover:border-foreground/20 transition-all duration-300">
-          <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
-            <CalendarDays className="h-5 w-5" />
-          </div>
-          <div className="text-[clamp(1.5rem,3vw,2.25rem)] font-bold tracking-[-0.03em] leading-none mb-1">
-            {stats.eventsCount}
-          </div>
-          <div className="text-sm text-muted-foreground">Active Events</div>
-        </div>
-        <div className="group rounded-2xl border border-border bg-card p-6 hover:shadow-sm hover:border-foreground/20 transition-all duration-300">
-          <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
-            <Building2 className="h-5 w-5" />
-          </div>
-          <div className="text-[clamp(1.5rem,3vw,2.25rem)] font-bold tracking-[-0.03em] leading-none mb-1">
-            {stats.clubsCount}
-          </div>
-          <div className="text-sm text-muted-foreground">Active Clubs</div>
-        </div>
-        <div className="group rounded-2xl border border-border bg-card p-6 hover:shadow-sm hover:border-foreground/20 transition-all duration-300">
-          <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
-            <Users className="h-5 w-5" />
-          </div>
-          <div className="text-[clamp(1.5rem,3vw,2.25rem)] font-bold tracking-[-0.03em] leading-none mb-1">
-            {memberships.length}
-          </div>
-          <div className="text-sm text-muted-foreground">My Clubs</div>
-        </div>
+        <StatCard icon={CalendarDays} label="Active Events" value={stats.eventsCount} color="bg-indigo-50 text-indigo-600" />
+        <StatCard icon={Building2} label="Active Clubs" value={stats.clubsCount} color="bg-emerald-50 text-emerald-600" />
+        <StatCard icon={Users} label="My Clubs" value={memberships.length} color="bg-amber-50 text-amber-600" />
       </div>
 
       <div className="grid gap-8 lg:grid-cols-3">
@@ -106,38 +85,15 @@ export default async function StudentDashboard() {
           </div>
           <div className="grid sm:grid-cols-2 gap-4">
             {events.map((event) => (
-              <Link key={event.id} href={`/dashboard/events/${event.id}`} className="group block">
-                <div className="rounded-2xl border border-border bg-card p-5 hover:shadow-sm hover:border-foreground/20 transition-all duration-300 h-full flex flex-col">
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="h-7 w-7 rounded-lg bg-muted border overflow-hidden flex items-center justify-center shrink-0">
-                      {event.clubs?.logo_url ? (
-                        <img src={event.clubs.logo_url} alt="" className="h-full w-full object-cover" />
-                      ) : (
-                        <CalendarDays className="h-3.5 w-3.5 text-muted-foreground" />
-                      )}
-                    </div>
-                    <span className="text-xs text-muted-foreground truncate">{event.clubs?.name}</span>
-                  </div>
-                  <h3 className="font-medium text-sm mb-1 line-clamp-1 group-hover:text-foreground transition-colors">{event.title}</h3>
-                  {event.description && (
-                    <p className="text-xs text-muted-foreground line-clamp-2 mb-3 flex-1">{event.description}</p>
-                  )}
-                  <div className="flex items-center justify-between pt-3 border-t border-border mt-auto">
-                    <span className="text-xs text-muted-foreground">{new Date(event.created_at).toLocaleDateString()}</span>
-                    {event.location && (
-                      <span className="text-xs text-muted-foreground truncate ml-2">{event.location}</span>
-                    )}
-                  </div>
-                </div>
-              </Link>
+              <EventCard key={event.id} event={event} href={`/dashboard/events/${event.id}`} />
             ))}
             {events.length === 0 && (
-              <div className="col-span-2 text-center py-16">
-                <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-muted mb-4">
-                  <CalendarDays className="h-6 w-6 text-muted-foreground" />
-                </div>
-                <p className="text-sm text-muted-foreground">No upcoming events. Check back soon!</p>
-              </div>
+              <EmptyState
+                className="col-span-2"
+                icon={CalendarDays}
+                title="No upcoming events"
+                message="Check back soon!"
+              />
             )}
           </div>
         </div>
@@ -150,13 +106,7 @@ export default async function StudentDashboard() {
                 <Link key={m.club_id} href={`/dashboard/clubs/${m.club_id}`} className="group block">
                   <div className="rounded-2xl border border-border bg-card p-4 hover:shadow-sm hover:border-foreground/20 transition-all duration-300">
                     <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-xl bg-muted border overflow-hidden flex items-center justify-center shrink-0">
-                        {m.clubs?.logo_url ? (
-                          <img src={m.clubs.logo_url} alt="" className="h-full w-full object-cover" />
-                        ) : (
-                          <span className="text-sm font-medium text-muted-foreground">{m.clubs?.name?.[0]}</span>
-                        )}
-                      </div>
+                      <EntityLogo src={m.clubs?.logo_url} name={m.clubs?.name} size="md" className="rounded-xl" />
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium truncate group-hover:text-foreground transition-colors">{m.clubs?.name}</p>
                         <Badge variant="secondary" className="capitalize mt-1">{m.role}</Badge>
@@ -167,15 +117,16 @@ export default async function StudentDashboard() {
               ))}
             </div>
           ) : (
-            <div className="rounded-2xl border border-border bg-card p-8 text-center">
-              <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-muted mb-4">
-                <Building2 className="h-6 w-6 text-muted-foreground" />
-              </div>
-              <p className="text-sm text-muted-foreground mb-4">You haven&apos;t joined any clubs yet.</p>
-              <Link href="/dashboard/clubs">
-                <Button variant="outline" size="sm">Browse clubs</Button>
-              </Link>
-            </div>
+            <EmptyState
+              icon={Building2}
+              title="No clubs yet"
+              message="You haven&apos;t joined any clubs yet."
+              action={
+                <Link href="/dashboard/clubs">
+                  <Button variant="outline" size="sm">Browse clubs</Button>
+                </Link>
+              }
+            />
           )}
 
           <Link href="/dashboard/clubs">

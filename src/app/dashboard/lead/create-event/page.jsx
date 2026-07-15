@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, Suspense } from 'react'
+import { useFormState } from '@/hooks/use-form-state'
 import { createSupabaseClient } from '@/lib/supabase/client'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -8,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select } from '@/components/ui/select'
+import { Alert } from '@/components/ui/alert'
 import { Card, CardContent } from '@/components/ui/card'
 
 function CreateEventForm() {
@@ -17,9 +19,7 @@ function CreateEventForm() {
   const [description, setDescription] = useState('')
   const [eventDate, setEventDate] = useState('')
   const [location, setLocation] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
-  const [success, setSuccess] = useState(false)
+  const { loading, error, success, handleSubmit } = useFormState()
   const router = useRouter()
   const searchParams = useSearchParams()
   const preselectedClub = searchParams.get('clubId')
@@ -48,12 +48,9 @@ function CreateEventForm() {
     fetchClubs()
   }, [preselectedClub])
 
-  const handleSubmit = async (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault()
-    setLoading(true)
-    setError(null)
-
-    try {
+    await handleSubmit(async () => {
       const { error: eventErr } = await supabase
         .from('events')
         .insert({
@@ -69,13 +66,8 @@ function CreateEventForm() {
 
       if (eventErr) throw eventErr
 
-      setSuccess(true)
       setTimeout(() => router.push('/dashboard/lead/live-events'), 2000)
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setLoading(false)
-    }
+    })
   }
 
   if (success) {
@@ -101,7 +93,7 @@ function CreateEventForm() {
 
       <Card>
         <CardContent className="p-6">
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={onSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="club">Club</Label>
               <Select id="club" value={clubId} onChange={(e) => setClubId(e.target.value)} required>
@@ -132,9 +124,7 @@ function CreateEventForm() {
               <Input id="location" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Event location" />
             </div>
 
-            {error && (
-              <div className="rounded-lg bg-destructive/5 border border-destructive/10 p-3 text-sm text-destructive">{error}</div>
-            )}
+            {error && <Alert variant="error">{error}</Alert>}
 
             <Button type="submit" loading={loading} className="w-full">
               {loading ? 'Publishing...' : 'Publish event'}

@@ -1,9 +1,9 @@
 import { createSupabaseServer } from '@/lib/supabase/server'
 import { unstable_cache } from 'next/cache'
 import { Card, CardContent } from '@/components/ui/card'
-import { Avatar } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { DashboardHeader } from '@/components/layout/DashboardHeader'
+import { EntityLogo } from '@/components/ui/entity-logo'
 
 const getMembers = unstable_cache(
   async () => {
@@ -32,9 +32,9 @@ export default async function MembersPage() {
           <Card key={member.id} className="hover:shadow-md transition-all">
             <CardContent className="p-5">
               <div className="flex items-center gap-3 mb-3">
-                <Avatar
+                <EntityLogo
                   src={member.avatar_url}
-                  fallback={member.full_name?.[0]}
+                  name={member.full_name}
                   size="md"
                 />
                 <div className="min-w-0 flex-1">

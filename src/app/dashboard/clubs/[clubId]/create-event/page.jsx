@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useFormState } from '@/hooks/use-form-state'
 import { createSupabaseClient } from '@/lib/supabase/client'
 import { useParams, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -8,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select } from '@/components/ui/select'
+import { Alert } from '@/components/ui/alert'
 import { Card, CardContent } from '@/components/ui/card'
 import { DashboardHeader } from '@/components/layout/DashboardHeader'
 
@@ -18,8 +20,7 @@ export default function ClubCreateEventPage() {
   const [eventDate, setEventDate] = useState('')
   const [location, setLocation] = useState('')
   const [status, setStatus] = useState('draft')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
+  const { loading, error, handleSubmit } = useFormState()
   const [clubName, setClubName] = useState('')
   const router = useRouter()
   const supabase = createSupabaseClient()
@@ -37,12 +38,9 @@ export default function ClubCreateEventPage() {
     fetchClub()
   }, [clubId])
 
-  const handleSubmit = async (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault()
-    setLoading(true)
-    setError(null)
-
-    try {
+    await handleSubmit(async () => {
       const { error: eventErr } = await supabase
         .from('events')
         .insert({
@@ -58,11 +56,7 @@ export default function ClubCreateEventPage() {
 
       if (eventErr) throw eventErr
       router.push(`/dashboard/clubs/${clubId}`)
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setLoading(false)
-    }
+    })
   }
 
   return (
@@ -71,7 +65,7 @@ export default function ClubCreateEventPage() {
 
       <Card>
         <CardContent className="p-6">
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={onSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="title">Title</Label>
               <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Event title" required />
@@ -100,9 +94,7 @@ export default function ClubCreateEventPage() {
               </Select>
             </div>
 
-            {error && (
-              <div className="rounded-lg bg-destructive/5 border border-destructive/10 p-3 text-sm text-destructive">{error}</div>
-            )}
+            {error && <Alert variant="error">{error}</Alert>}
 
             <Button type="submit" loading={loading} className="w-full">
               {loading ? 'Creating...' : 'Create event'}

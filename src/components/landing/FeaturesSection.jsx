@@ -9,7 +9,6 @@ import {
   Bell,
   CheckCircle2,
   Users,
-  MessageSquare,
 } from 'lucide-react'
 
 const features = [

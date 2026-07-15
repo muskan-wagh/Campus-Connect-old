@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useFormState } from '@/hooks/use-form-state'
 import { createSupabaseClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -8,7 +9,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
 import { Card, CardContent } from '@/components/ui/card'
-import { Avatar } from '@/components/ui/avatar'
+import { Alert } from '@/components/ui/alert'
+import { EntityLogo } from '@/components/ui/entity-logo'
 import { DashboardHeader } from '@/components/layout/DashboardHeader'
 
 export default function EditProfilePage() {
@@ -20,9 +22,7 @@ export default function EditProfilePage() {
   const [avatarFile, setAvatarFile] = useState(null)
   const [coverFile, setCoverFile] = useState(null)
   const [avatarUrl, setAvatarUrl] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
-  const [success, setSuccess] = useState(false)
+  const { loading, error, success, handleSubmit } = useFormState()
   const router = useRouter()
   const supabase = createSupabaseClient()
 
@@ -44,13 +44,9 @@ export default function EditProfilePage() {
     loadProfile()
   }, [])
 
-  const handleSubmit = async (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault()
-    setLoading(true)
-    setError(null)
-    setSuccess(false)
-
-    try {
+    await handleSubmit(async () => {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Not authenticated')
 
@@ -86,13 +82,8 @@ export default function EditProfilePage() {
 
       if (updateErr) throw updateErr
 
-      setSuccess(true)
       setTimeout(() => router.push('/dashboard/profile'), 1500)
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setLoading(false)
-    }
+    })
   }
 
   return (
@@ -101,9 +92,9 @@ export default function EditProfilePage() {
 
       <Card>
         <CardContent className="p-6">
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={onSubmit} className="space-y-4">
             <div className="flex items-center gap-4 mb-4">
-              <Avatar src={avatarUrl} fallback={fullName?.[0]} size="lg" />
+              <EntityLogo src={avatarUrl} name={fullName} size="lg" />
               <div>
                 <input type="file" accept="image/*" onChange={(e) => setAvatarFile(e.target.files[0])} className="hidden" id="avatar" />
                 <label htmlFor="avatar" className="text-sm text-primary hover:underline cursor-pointer">Change avatar</label>
@@ -153,13 +144,9 @@ export default function EditProfilePage() {
               </label>
             </div>
 
-            {error && (
-              <div className="rounded-lg bg-destructive/5 border border-destructive/10 p-3 text-sm text-destructive">{error}</div>
-            )}
+            {error && <Alert variant="error">{error}</Alert>}
 
-            {success && (
-              <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-3 text-sm text-emerald-700">Profile updated successfully!</div>
-            )}
+            {success && <Alert variant="success">Profile updated successfully!</Alert>}
 
             <Button type="submit" loading={loading} className="w-full">
               {loading ? 'Saving...' : 'Save changes'}

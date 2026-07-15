@@ -2,58 +2,8 @@
 
 import { motion } from 'framer-motion'
 import Link from 'next/link'
-import { Calendar, ArrowRight, MapPin, Clock } from 'lucide-react'
-
-function formatDate(dateString) {
-  const date = new Date(dateString)
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-}
-
-function EventCard({ event, index }) {
-  return (
-    <Link href={`/dashboard/events/${event.id}`} className="group block">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: '-80px' }}
-        transition={{ duration: 0.5, delay: index * 0.08, ease: [0.16, 1, 0.3, 1] }}
-        className="rounded-2xl border border-border bg-card p-6 hover:shadow-sm hover:border-foreground/20 transition-all duration-300 h-full flex flex-col"
-      >
-        <div className="flex items-center gap-3 mb-4">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-muted border overflow-hidden">
-            {event.clubs?.logo_url ? (
-              <img src={event.clubs.logo_url} alt="" className="h-full w-full object-cover" />
-            ) : (
-              <Calendar className="h-4.5 w-4.5 text-muted-foreground" />
-            )}
-          </div>
-          <div className="min-w-0">
-            <div className="text-sm font-medium truncate">{event.clubs?.name || 'Club'}</div>
-            <div className="text-xs text-muted-foreground">{formatDate(event.created_at)}</div>
-          </div>
-        </div>
-
-        <h3 className="text-base font-semibold mb-2 group-hover:text-foreground transition-colors line-clamp-2">
-          {event.title}
-        </h3>
-
-        {event.description && (
-          <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2 mb-4 flex-1">
-            {event.description}
-          </p>
-        )}
-
-        <div className="flex items-center justify-between pt-4 border-t border-border mt-auto">
-          <span className="text-xs text-muted-foreground">{formatDate(event.created_at)}</span>
-          <span className="text-xs font-medium text-foreground opacity-0 group-hover:opacity-100 transition-all inline-flex items-center gap-1 translate-x-[-4px] group-hover:translate-x-0">
-            View event
-            <ArrowRight className="h-3 w-3" />
-          </span>
-        </div>
-      </motion.div>
-    </Link>
-  )
-}
+import { Calendar, ArrowRight } from 'lucide-react'
+import { EventCard } from '@/components/ui/event-card'
 
 export default function EventsSection({ events }) {
   return (
@@ -87,7 +37,17 @@ export default function EventsSection({ events }) {
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
           {events?.length > 0 ? (
-            events.map((event, i) => <EventCard key={event.id} event={event} index={i} />)
+            events.map((event, i) => (
+              <motion.div
+                key={event.id}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: '-80px' }}
+                transition={{ duration: 0.5, delay: i * 0.08, ease: [0.16, 1, 0.3, 1] }}
+              >
+                <EventCard event={event} href={`/dashboard/events/${event.id}`} />
+              </motion.div>
+            ))
           ) : (
             <motion.div
               initial={{ opacity: 0, y: 20 }}

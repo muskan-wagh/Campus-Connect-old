@@ -1,33 +1,28 @@
-import { createSupabaseServer } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
+'use client'
 
-export default async function DashboardPage() {
-    const supabase = await createSupabaseServer()
-    const { data: { user } } = await supabase.auth.getUser()
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { createSupabaseClient } from '@/lib/supabase/client'
 
-    if (!user) {
-        redirect('/auth/login')
+export default function DashboardRedirectPage() {
+  const router = useRouter()
+
+  useEffect(() => {
+    async function redirect() {
+      const supabase = createSupabaseClient()
+      if (!supabase) { router.replace('/auth/login'); return }
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        router.replace('/auth/login')
+        return
+      }
+
+      const role = (session.user.user_metadata?.role || 'student').toLowerCase().trim()
+      const normalized = (role === 'lead' || role === 'club_lead') ? 'lead' : role
+      router.replace(`/dashboard/${normalized}`)
     }
+    redirect()
+  }, [router])
 
-    // Attempt to fetch profile
-    let { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single()
-
-    // Fallback to metadata if DB record hasn't synced yet
-    const rawRole = profile?.role || user.user_metadata?.role || 'student'
-    const userRole = rawRole.toLowerCase().trim()
-
-    switch (userRole) {
-        case 'admin':
-            return redirect('/dashboard/admin')
-        case 'club_lead':
-        case 'lead':
-            return redirect('/dashboard/lead')
-        case 'student':
-        default:
-            return redirect('/dashboard/student')
-    }
+  return null
 }

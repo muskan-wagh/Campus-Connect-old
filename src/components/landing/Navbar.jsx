@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion, AnimatePresence } from 'framer-motion'
+import { Logo } from '@/components/ui/logo'
 
 const navItems = [
   { label: 'Features', href: '#features' },
@@ -30,14 +31,7 @@ export default function Navbar() {
     >
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="flex h-16 md:h-18 items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-foreground flex items-center justify-center">
-              <span className="text-background text-sm font-bold">CC</span>
-            </div>
-            <span className="text-base font-semibold tracking-tight">
-              Campus<span className="text-muted-foreground">Connect</span>
-            </span>
-          </Link>
+          <Logo />
 
           <nav className="hidden md:flex items-center gap-8">
             {navItems.map((item) => (

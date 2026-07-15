@@ -5,8 +5,11 @@ import { createSupabaseClient } from '@/lib/supabase/client'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
+import { Eye, EyeOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Logo } from '@/components/ui/logo'
+import { Alert } from '@/components/ui/alert'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 
@@ -60,14 +63,7 @@ function LoginForm() {
 
       <div className="w-full max-w-sm relative">
         <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-foreground flex items-center justify-center">
-              <span className="text-background text-sm font-bold">CC</span>
-            </div>
-            <span className="text-base font-semibold tracking-tight">
-              Campus<span className="text-muted-foreground">Connect</span>
-            </span>
-          </Link>
+          <Logo />
         </div>
 
         <motion.div
@@ -82,13 +78,8 @@ function LoginForm() {
             </CardHeader>
             <CardContent>
               {message && (
-                <div className="mb-6 rounded-xl bg-emerald-50 border border-emerald-200 p-4 text-sm text-emerald-800">
-                  <div className="flex items-center gap-2">
-                    <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    {message}
-                  </div>
+                <div className="mb-6">
+                  <Alert variant="success">{message}</Alert>
                 </div>
               )}
 
@@ -127,22 +118,12 @@ function LoginForm() {
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                     >
-                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        {showPassword ? (
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
-                        ) : (
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0zM2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268-2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                        )}
-                      </svg>
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
                 </div>
 
-                {error && (
-                  <div className="rounded-xl bg-destructive/5 border border-destructive/10 p-3 text-sm text-destructive">
-                    {error}
-                  </div>
-                )}
+                {error && <Alert variant="error">{error}</Alert>}
 
                 <Button type="submit" loading={loading} className="w-full">
                   {loading ? 'Signing in...' : 'Sign in'}

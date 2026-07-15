@@ -1,12 +1,14 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useFormState } from '@/hooks/use-form-state'
 import { createSupabaseClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
+import { Alert } from '@/components/ui/alert'
 import { Card, CardContent } from '@/components/ui/card'
 import { DashboardHeader } from '@/components/layout/DashboardHeader'
 
@@ -15,9 +17,7 @@ export default function AddMemberPage() {
   const [clubId, setClubId] = useState('')
   const [email, setEmail] = useState('')
   const [role, setRole] = useState('member')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState(null)
-  const [success, setSuccess] = useState(false)
+  const { loading, error, success, handleSubmit } = useFormState()
   const router = useRouter()
   const supabase = createSupabaseClient()
 
@@ -39,13 +39,9 @@ export default function AddMemberPage() {
     fetchClubs()
   }, [])
 
-  const handleSubmit = async (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault()
-    setLoading(true)
-    setError(null)
-    setSuccess(false)
-
-    try {
+    await handleSubmit(async () => {
       const { data: profile } = await supabase
         .from('profiles')
         .select('id')
@@ -68,13 +64,8 @@ export default function AddMemberPage() {
         throw insertErr
       }
 
-      setSuccess(true)
       setEmail('')
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setLoading(false)
-    }
+    })
   }
 
   return (
@@ -83,7 +74,7 @@ export default function AddMemberPage() {
 
       <Card>
         <CardContent className="p-6">
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={onSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="club">Club</Label>
               <Select id="club" value={clubId} onChange={(e) => setClubId(e.target.value)} required>
@@ -107,13 +98,9 @@ export default function AddMemberPage() {
               </Select>
             </div>
 
-            {error && (
-              <div className="rounded-lg bg-destructive/5 border border-destructive/10 p-3 text-sm text-destructive">{error}</div>
-            )}
+            {error && <Alert variant="error">{error}</Alert>}
 
-            {success && (
-              <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-3 text-sm text-emerald-700">Member added successfully!</div>
-            )}
+            {success && <Alert variant="success">Member added successfully!</Alert>}
 
             <Button type="submit" loading={loading} className="w-full">
               {loading ? 'Adding member...' : 'Add member'}

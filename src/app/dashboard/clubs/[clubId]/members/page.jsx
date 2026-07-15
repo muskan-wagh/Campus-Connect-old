@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createSupabaseClient } from '@/lib/supabase/client'
 import { useParams } from 'next/navigation'
+import { Alert } from '@/components/ui/alert'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -85,12 +86,8 @@ export default function ClubManageMembersPage() {
         <Button onClick={addMember} loading={loading} size="sm">Add</Button>
       </div>
 
-      {error && (
-        <div className="rounded-lg bg-destructive/5 border border-destructive/10 p-3 text-sm text-destructive mb-4">{error}</div>
-      )}
-      {success && (
-        <div className="rounded-lg bg-emerald-50 border border-emerald-200 p-3 text-sm text-emerald-700 mb-4">Member added!</div>
-      )}
+      {error && <Alert variant="error" className="mb-4">{error}</Alert>}
+      {success && <Alert variant="success" className="mb-4">Member added!</Alert>}
 
       <div className="space-y-2">
         {members.map((member) => (

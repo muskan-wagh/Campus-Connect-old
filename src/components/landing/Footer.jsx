@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { Building2, Github, Twitter } from 'lucide-react'
+import { Logo } from '@/components/ui/logo'
 
 const footerLinks = [
   {
@@ -38,14 +39,7 @@ export default function Footer() {
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 lg:gap-12 py-12 md:py-16">
           <div className="col-span-2 md:col-span-1">
-            <Link href="/" className="flex items-center gap-2 mb-4">
-              <div className="h-8 w-8 rounded-lg bg-foreground flex items-center justify-center">
-                <span className="text-background text-sm font-bold">CC</span>
-              </div>
-              <span className="text-base font-semibold tracking-tight">
-                Campus<span className="text-muted-foreground">Connect</span>
-              </span>
-            </Link>
+            <div className="mb-4"><Logo /></div>
             <p className="text-sm text-muted-foreground leading-relaxed max-w-xs mb-6">
               The unified platform for campus club and event management.
             </p>

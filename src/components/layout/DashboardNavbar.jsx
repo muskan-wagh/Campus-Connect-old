@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { createSupabaseClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import { Avatar } from '@/components/ui/avatar'
+import { Logo } from '@/components/ui/logo'
 import {
   LayoutDashboard,
   Calendar,
@@ -105,14 +106,7 @@ export default function DashboardNavbar({ user, profile }) {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between gap-4">
             <div className="flex items-center gap-4">
-              <Link href="/" className="flex items-center gap-2 shrink-0">
-                <div className="h-8 w-8 rounded-lg bg-foreground flex items-center justify-center">
-                  <span className="text-background text-sm font-bold">CC</span>
-                </div>
-                <span className="text-base font-semibold tracking-tight hidden sm:inline">
-                  Campus<span className="text-muted-foreground">Connect</span>
-                </span>
-              </Link>
+              <Logo />
 
               <nav className="hidden md:flex items-center gap-1 ml-6">
                 {items.map((item) => (
@@ -187,14 +181,7 @@ export default function DashboardNavbar({ user, profile }) {
           <div className="absolute inset-0 bg-black/40" onClick={() => setMobileOpen(false)} />
           <div className="absolute left-0 top-0 bottom-0 w-72 bg-background border-r border-border shadow-xl">
             <div className="flex items-center justify-between px-4 h-16 border-b border-border">
-              <Link href="/" className="flex items-center gap-2">
-                <div className="h-8 w-8 rounded-lg bg-foreground flex items-center justify-center">
-                  <span className="text-background text-sm font-bold">CC</span>
-                </div>
-                <span className="text-base font-semibold tracking-tight">
-                  Campus<span className="text-muted-foreground">Connect</span>
-                </span>
-              </Link>
+              <Logo />
               <button onClick={() => setMobileOpen(false)} className="flex h-9 w-9 items-center justify-center rounded-xl hover:bg-accent transition-colors" aria-label="Close menu">
                 <X className="h-5 w-5" />
               </button>
